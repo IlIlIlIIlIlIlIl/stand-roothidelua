@@ -14,11 +14,8 @@ roothide_menu:action("Stop Script", {}, "Stop the script.", function()
     util.stop_script()
 end)
 
-menu.action(menu.my_root(), "Go to menu", {}, "Go to the scripts main menu", function()
+menu.action(menu.my_root(), "Go To Script Menu", {}, "Go to the scripts main menu", function()
     menu.ref_by_path("Stand>Roothide"):trigger()
-end)
-menu.action(menu.my_root(), "Restart Script", {}, "Goes through the script stop process, freshly loads the contents of the script file, and starts the main thread again.", function()
-    util.restart_script()
 end)
 menu.action(menu.my_root(), "Check for Update", {}, "The script will automatically check for updates at most daily, but you can manually check using this option anytime.", function()
     auto_update_config.check_interval = 0
@@ -34,7 +31,8 @@ local session = menu.list(online, "Session", {}, "")
 local traffic = menu.list(online, "Traffic", {}, "")
 local world = menu.list(roothide_menu, "World", {}, "")
 local game = menu.list(roothide_menu, "Game", {}, "")
-local debuglist = menu.list(roothide_menu, "Debug", {}, "")
+local misc = menu.list(roothide_menu, "Misc", {}, "")
+--local debuglist = menu.list(roothide_menu, "Debug", {}, "")
 
 if SCRIPT_MANUAL_START then
     menu.ref_by_path("Stand>Roothide"):trigger()
@@ -43,39 +41,26 @@ end
 ---------
 --Debug--
 ---------
-debuglist:action("Restart Script", {}, "Goes through the script stop process, freshly loads the contents of the script file, and starts the main thread again.", function()
-    util.restart_script()
-end)
-debuglist:toggle_loop("Display NAT Type In Overlay", {}, "", function()
-	local natTypes = {"Open", "Moderate", "Strict"}
-    local getNatType = util.stat_get_int64("_NatType")
-    for nat, natType in natTypes do
-        if getNatType == nat then
-            util.draw_debug_text($"NAT Type: {natType}")
-        end
-    end
-end)
-debuglist:action("Log stand lang registered codes", {}, "", function()
-    util.toast(lang.find_builtin("Movement"), TOAST_ABOVE_MAP | TOAST_CONSOLE)
-end)
-debuglist:action("Check for Update", {}, "The script will automatically check for updates at most daily, but you can manually check using this option anytime.", function()
-    auto_update_config.check_interval = 0
-    util.toast("Checking for updates")
-    auto_updater.run_auto_update(auto_update_config)
-end)
+--debuglist:action("Restart Script", {}, "Goes through the script stop process, freshly loads the contents of the script file, and starts the main thread again.", function()
+--    util.restart_script()
+--end)
+--debuglist:action("Log stand lang registered codes", {}, "", function()
+--    util.toast(lang.find_builtin("Movement"), TOAST_ABOVE_MAP | TOAST_CONSOLE)
+--end)
+
 --------
 --Sᴇʟғ--
 --------
-selflist:toggle_loop("True No Ragdoll", {}, "Speeds up getting up after being knocked down", function()
+selflist:toggle_loop("True No Ragdoll", {}, "Speeds up getting up after being knocked down.", function()
     SET_PED_CONFIG_FLAG(players.user_ped(), 227, IS_PLAYER_PLAYING(players.user()))
 end)
-selflist:action("Easy way out", {}, "", function()
+selflist:action("Easy Way Out", {}, "Are you sure you want to do this?", function()
     memory.write_int(memory.script_global(1574582+6), 1)
 end)
 -------------------
 --Vᴇʜɪᴄʟᴇ Oᴘᴛɪᴏɴs​​​​--
 -------------------
-vehicleoptions:toggle_loop("Engine Always On", {"alwayson"}, "Current/Last vehicles engine and lights will always stay on.", function()
+vehicleoptions:toggle_loop("Engine Always On", {"alwayson"}, "Keeps the engine and lights running when you exit the vehicle.", function()
     local vehicle = GET_VEHICLE_PED_IS_IN(PLAYER_PED_ID(), false)
     if DOES_ENTITY_EXIST(vehicle) then
     SET_VEHICLE_ENGINE_ON(vehicle, true, true, true)
@@ -101,7 +86,7 @@ end
 local function vehicle_path_to_stand_ref(path)
     return menu.ref_by_path("Vehicle>Garage>" .. string.gsub(string.sub(string.sub(path, -((#path) - (#(filesystem.stand_dir() .. [[Vehicles\]])))), 1, -5), "\\", ">"))
 end
-vehicleoptions:action("Random Garage Vehicle", {"randomvehicle", "rv"}, "Picks a random vehicle from your Stand/Personal garage.", function()
+vehicleoptions:action("Random Stand Garage Vehicle", {"randomvehicle", "rv"}, "Picks a random vehicle from your Stand garage.", function()
         local vehicles_dir = filesystem.stand_dir() .. "Vehicles"
         local all_vehicles = get_all_vehicles(vehicles_dir)
         local random_vehicle = all_vehicles[math.random(#all_vehicles)]
@@ -208,6 +193,25 @@ end)
 --------
 --Gᴀᴍᴇ--
 --------
+
+
+--------
+--Mɪsᴄ--
+--------
+misc:toggle_loop("Display NAT Type In Info Overlay", {}, "", function()
+	local natTypes = {"Open", "Moderate", "Strict"}
+    local getNatType = util.stat_get_int64("_NatType")
+    for nat, natType in natTypes do
+        if getNatType == nat then
+            util.draw_debug_text($"NAT Type: {natType}")
+        end
+    end
+end)
+misc:action("Check for Update", {}, "The script will automatically check for updates at most daily, but you can manually check using this option anytime.", function()
+    auto_update_config.check_interval = 0
+    util.toast("Checking for updates")
+    auto_updater.run_auto_update(auto_update_config)
+end)
 
 
 ------------------
