@@ -15,7 +15,7 @@ roothide_menu:action("Stop Script", {}, "Stop the script.", function()
 end)
 
 menu.action(menu.my_root(), "Go to menu", {}, "Go to the scripts main menu", function()
-    menu.trigger_commands("roothidescript")
+    menu.ref_by_path("Stand>Roothide"):trigger()
 end)
 menu.action(menu.my_root(), "Restart Script", {}, "Goes through the script stop process, freshly loads the contents of the script file, and starts the main thread again.", function()
     util.restart_script()
@@ -26,7 +26,7 @@ menu.action(menu.my_root(), "Check for Update", {}, "The script will automatical
     auto_updater.run_auto_update(auto_update_config)
 end)
 
-local self = menu.list(roothide_menu, "Self", {}, "")
+local selflist = menu.list(roothide_menu, "Self", {}, "")
 local vehicleoptions = menu.list(roothide_menu, "Vehicle Options", {}, "")
 local seatswitcher = menu.list(vehicleoptions, "Switch Seat", {"switchseat", "seatswitch"}, "")
 local online = menu.list(roothide_menu, "Online", {}, "")
@@ -37,7 +37,7 @@ local game = menu.list(roothide_menu, "Game", {}, "")
 local debuglist = menu.list(roothide_menu, "Debug", {}, "")
 
 if SCRIPT_MANUAL_START then
-menu.trigger_commands("roothidescript")
+    menu.ref_by_path("Stand>Roothide"):trigger()
 end
 
 ---------
@@ -66,10 +66,10 @@ end)
 --------
 --Sᴇʟғ--
 --------
-self:toggle_loop("True No Ragdoll", {}, "Speeds up getting up after being knocked down", function()
+selflist:toggle_loop("True No Ragdoll", {}, "Speeds up getting up after being knocked down", function()
     SET_PED_CONFIG_FLAG(players.user_ped(), 227, IS_PLAYER_PLAYING(players.user()))
 end)
-self:action("Easy way out", {}, "", function()
+selflist:action("Easy way out", {}, "", function()
     memory.write_int(memory.script_global(1574582+6), 1)
 end)
 -------------------
