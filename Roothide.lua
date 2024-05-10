@@ -3,11 +3,11 @@ util.require_natives("3095a", "g")
 
 util.ensure_package_is_installed("lua/auto-updater")
 local auto_updater = require("auto-updater")
-
-auto_updater.run_auto_update({
+local auto_update_config = {
     source_url="https://raw.githubusercontent.com/IlIlIlIIlIlIlIl/roothidelua-stand/main/Roothide.lua",
     script_relpath=SCRIPT_RELPATH
-})
+}
+auto_updater.run_auto_update(auto_update_config)
 
 local roothide_menu = menu.attach_before(menu.ref_by_path("Stand>Settings"), menu.list(menu.shadow_root(), "Roothide", {"roothidescript"}, "Roothide Script"))
 roothide_menu:action("Stop Script", {}, "Stop the script.", function()
@@ -20,8 +20,11 @@ end)
 menu.action(menu.my_root(), "Restart Script", {}, "Goes through the script stop process, freshly loads the contents of the script file, and starts the main thread again.", function()
     util.restart_script()
 end)
---menu.action(menu.my_root(), "Check for Update", {}, "The script will automatically check for updates at most daily, but you can manually check using this option anytime.", function()
---end)
+menu.action(menu.my_root(), "Check for Update", {}, "The script will automatically check for updates at most daily, but you can manually check using this option anytime.", function()
+    auto_update_config.check_interval = 0
+    util.toast("Checking for updates")
+    auto_updater.run_auto_update(auto_update_config)
+end)
 
 local self = menu.list(roothide_menu, "Self", {}, "")
 local vehicleoptions = menu.list(roothide_menu, "Vehicle Options", {}, "")
