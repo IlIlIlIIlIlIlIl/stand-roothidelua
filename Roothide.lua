@@ -40,7 +40,7 @@ menu.action(menu.my_root(), "Check for Updates", {}, "The script will automatica
     auto_update_config.check_interval = 0
     util.toast("Checking for updates")
     if auto_updater.run_auto_update(auto_update_config) then
-        notify("No updates have been found.")
+        util.toast("No updates have been found.")
     end
 end)
 
@@ -58,7 +58,7 @@ roothide_menu:action("Check for Updates", {}, "The script will automatically che
     auto_update_config.check_interval = 0
     util.toast("Checking for updates")
     if auto_updater.run_auto_update(auto_update_config) then
-        notify("No updates have been found.")
+        util.toast("No updates have been found.")
     end
 end)
 
