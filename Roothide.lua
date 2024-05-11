@@ -1,13 +1,32 @@
 util.keep_running()
 util.require_natives("3095a", "g")
 
+function is_developer()
+    local developer = {0x0C6E0653, 0x0EE24B30}
+    local user = players.get_rockstar_id(players.user())
+    for developer as id do
+        if user == id then
+            return true
+        end
+    end
+    return false
+end
+
 util.ensure_package_is_installed("lua/auto-updater")
 local auto_updater = require("auto-updater")
 local auto_update_config = {
     source_url="https://raw.githubusercontent.com/IlIlIlIIlIlIlIl/roothidelua-stand/main/Roothide.lua",
     script_relpath=SCRIPT_RELPATH
 }
-auto_updater.run_auto_update(auto_update_config)
+if async_http.have_access() then
+    if not is_developer() then
+        auto_updater.run_auto_update(auto_update_config)
+    else
+        util.toast("Auto Updater Disabled")
+    end
+else
+    util.toast("This Script needs Internet Access for the Auto Updater to work!")
+end
 
 local roothide_menu = menu.attach_before(menu.ref_by_path("Stand>Settings"), menu.list(menu.shadow_root(), "Roothide", {"roothidescript"}, "Roothide Script"))
 roothide_menu:action("Stop Script", {}, "Stop the script.", function()
@@ -17,10 +36,12 @@ end)
 menu.action(menu.my_root(), "Go To Script Menu", {}, "Go to the scripts main menu", function()
     menu.ref_by_path("Stand>Roothide"):trigger()
 end)
-menu.action(menu.my_root(), "Check for Update", {}, "The script will automatically check for updates at most daily, but you can manually check using this option anytime.", function()
+menu.action(menu.my_root(), "Check for Updates", {}, "The script will automatically check for updates at most daily, but you can manually check using this option anytime.", function()
     auto_update_config.check_interval = 0
     util.toast("Checking for updates")
-    auto_updater.run_auto_update(auto_update_config)
+    if auto_updater.run_auto_update(auto_update_config) then
+        notify("No updates have been found.")
+    end
 end)
 
 local selflist = menu.list(roothide_menu, "Self", {}, "")
@@ -32,21 +53,18 @@ local traffic = menu.list(online, "Traffic", {}, "")
 local world = menu.list(roothide_menu, "World", {}, "")
 local game = menu.list(roothide_menu, "Game", {}, "")
 local misc = menu.list(roothide_menu, "Misc", {}, "")
---local debuglist = menu.list(roothide_menu, "Debug", {}, "")
+
+roothide_menu:action("Check for Updates", {}, "The script will automatically check for updates at most daily, but you can manually check using this option anytime.", function()
+    auto_update_config.check_interval = 0
+    util.toast("Checking for updates")
+    if auto_updater.run_auto_update(auto_update_config) then
+        notify("No updates have been found.")
+    end
+end)
 
 if SCRIPT_MANUAL_START then
     menu.ref_by_path("Stand>Roothide"):trigger()
 end
-
----------
---Debug--
----------
---debuglist:action("Restart Script", {}, "Goes through the script stop process, freshly loads the contents of the script file, and starts the main thread again.", function()
---    util.restart_script()
---end)
---debuglist:action("Log stand lang registered codes", {}, "", function()
---    util.toast(lang.find_builtin("Movement"), TOAST_ABOVE_MAP | TOAST_CONSOLE)
---end)
 
 --------
 --Sᴇʟғ--
@@ -171,6 +189,55 @@ end)
 ---------
 --Wᴏʀʟᴅ​​​​​​​​​--
 ---------
+world:textslider("Clear Area", {}, "", {"Peds", "Vehicles", "Objects", "Pickups", "Projectiles", "Sounds"}, function(index, name)
+    local counter = 0
+    switch index do
+        case 1:
+            for entities.get_all_peds_as_handles() as ped do
+                if ped ~= players.user_ped() and not IS_PED_A_PLAYER(ped) then
+                    entities.delete_by_handle(ped)
+                    counter += 1
+                    util.yield()
+                end
+            end
+            break
+        case 2:
+            for entities.get_all_vehicles_as_handles() as vehicle do
+				local owner = entities.get_owner(vehicle)
+                if vehicle ~= GET_VEHICLE_PED_IS_IN(players.user_ped(), false) and DECOR_GET_INT(vehicle, "Player_Vehicle") == 0 and (owner == players.user() or owner == -1) then
+                    entities.delete_by_handle(vehicle)
+                    counter += 1
+                end
+                util.yield()
+            end
+            break
+        case 3:
+            for entities.get_all_objects_as_handles() as object do
+                entities.delete_by_handle(object)
+                counter += 1
+                util.yield()
+            end
+            break
+        case 4:
+            for entities.get_all_pickups_as_handles() as pickup do
+                entities.delete_by_handle(pickup)
+                counter += 1
+                util.yield()
+            end
+            break
+        case 5:
+            CLEAR_AREA_OF_PROJECTILES(players.get_position(players.user()), 1000.0, 0)
+            counter = "all"
+            break
+        case 6:
+            for i = 0, 99 do
+                STOP_SOUND(i)
+                util.yield()
+            end
+        break
+    end
+    util.toast($"Cleared {tostring(counter)} {name:lower()}.")
+end)
 world:action("Super Cleanse", {"supercleanse"}, "Uses stand API to instantly delete EVERY entity it finds (including player vehicles!).", function(on_click)
     local ct = 0
     for k,ent in pairs(entities.get_all_vehicles_as_handles()) do
@@ -207,13 +274,17 @@ misc:toggle_loop("Display NAT Type In Info Overlay", {}, "", function()
         end
     end
 end)
-misc:action("Check for Update", {}, "The script will automatically check for updates at most daily, but you can manually check using this option anytime.", function()
-    auto_update_config.check_interval = 0
-    util.toast("Checking for updates")
-    auto_updater.run_auto_update(auto_update_config)
-end)
 
+if is_developer() then
+    local debuglist = menu.list(roothide_menu, "Debug", {}, "")
+    debuglist:action("Restart Script", {}, "Goes through the script stop process, freshly loads the contents of the script file, and starts the main thread again.", function()
+        util.restart_script()
+    end)
+    debuglist:action("Log stand lang registered codes", {}, "", function()
+        util.toast(lang.find_builtin("Movement"), TOAST_ABOVE_MAP | TOAST_CONSOLE)
+    end)
 
+end
 ------------------
 --Pʟᴀʏᴇʀ Oᴘᴛɪᴏɴs--
 ------------------
