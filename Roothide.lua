@@ -15,6 +15,7 @@
 ]]
 util.keep_running()
 util.require_natives("3095a", "g")
+local scriptStartTime = util.current_time_millis()
 local function is_developer()
     local developer = {0x0C6E0653, 0x0EE24B30}
     local user = players.get_rockstar_id(players.user())
@@ -31,16 +32,28 @@ local auto_update_config = {
     source_url="https://raw.githubusercontent.com/IlIlIlIIlIlIlIl/roothidelua-stand/main/Roothide.lua",
     script_relpath=SCRIPT_RELPATH
 }
+util.ensure_package_is_installed("lua/luaffi")
+local ffi = require "luaffi"
+local kernel32 = ffi.open("kernel32")
+$define STD_OUTPUT_HANDLE = -11
+$define INVALID_HANDLE_VALUE = -1
+$define ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x4
+local hSTDOUT = kernel32:call("GetStdHandle", STD_OUTPUT_HANDLE)
+if hSTDOUT ~= INVALID_HANDLE_VALUE then
+    local mode = memory.alloc_int()
+    if kernel32:call("GetConsoleMode", hSTDOUT, mode) ~= 0 then
+        kernel32:call("SetConsoleMode", hSTDOUT, memory.read_int(mode) | ENABLE_VIRTUAL_TERMINAL_PROCESSING)
+    end
+end
 if async_http.have_access() then
     if not is_developer() then
         auto_updater.run_auto_update(auto_update_config)
     else
-        util.toast("Auto Updater Disabled")
+        print("\x1B[1;35m[Roothide] \x1B[0;30;42mDev Mode Enabled\x1B[0m")
     end
 else
     util.toast("This Script needs Internet Access for the Auto Updater to work!")
 end
-
 --------------
 --Mᴇɴᴜ Sᴇᴛᴜᴘ--
 --------------
@@ -96,9 +109,6 @@ local traffic = menu.list(online, "Traffic", {}, "")
 
     selflist:toggle_loop("True No Ragdoll", {}, "Speeds up getting up after being knocked down.", function()
         SET_PED_CONFIG_FLAG(players.user_ped(), 227, IS_PLAYER_PLAYING(players.user()))
-    end)
-    selflist:action("Easy Way Out", {}, "Are you sure you want to do this?", function()
-        memory.write_int(memory.script_global(1574582+6), 1)
     end)
 
 ------------------------
@@ -206,13 +216,11 @@ local traffic = menu.list(online, "Traffic", {}, "")
             end)
         --
     local showspeakerson = online:toggle_loop("Show speakers", {"showspeakers"}, "Accurately shows who is talking as soon as it happens. Better than vanilla.", function()
-        if util.is_session_started() and not util.is_session_transition_active() then
             for players.list(true, true, true) as pid do
                 if NETWORK_IS_PLAYER_TALKING(pid) then
                     util.draw_debug_text(players.get_name(pid).." is talking")
                 end
             end
-        end
     end)
     showspeakerson.value = true
     online:toggle_loop("Hide Help Text", {"hidehelptext"}, "", function() 
@@ -225,6 +233,7 @@ local traffic = menu.list(online, "Traffic", {}, "")
             NETWORK_END_TUTORIAL_SESSION()
         end
     end)
+    --online:toggle_loop("Log Chat To Console", {}, "", function()
 ---------
 --Wᴏʀʟᴅ​​​​​​​​​--
 ---------
@@ -362,6 +371,21 @@ players.add_command_hook(function(pid, player_root)
 		SET_REMOTE_PLAYER_AS_GHOST(pid, false)
 	end)
 end)
+
+local ANSI_RESET = "\x1b[0m" -- Reset to default colour
+local ANSI_YELLOW = "\x1b[0;33m" -- Yellow colour code
+local ANSI_GREEN = "\x1b[1;32m" -- Green colour code
+
+local function onChatMessage(sender, reserved, text, team_chat, networked, is_auto)
+    local playerName = players.get_name(sender)
+    local teamColour = team_chat and ANSI_GREEN or ANSI_YELLOW
+    local logChatMessage = teamColour .. playerName .. " [" .. (team_chat and "TEAM" or "ALL") .. "] " .. text .. ANSI_RESET
+    util.log(logChatMessage)
+end
+
+chat.on_message(onChatMessage)
+
+util.log(string.format("\x1B[1;35m[Roothide] \x1B[0;37mScript loaded in %dms\x1B[0m", util.current_time_millis() - scriptStartTime))
 --[[
      ..      ...                                  s                   .       ..                  
   :~"8888x :"%888x                               :8      .uef^"      @88>   dF                    
