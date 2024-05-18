@@ -13,10 +13,11 @@
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⣧⠹⠦⠃⣾⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⠛⠛⠛⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ]]
+
 util.keep_running()
 util.require_natives("3095a", "g")
 local scriptStartTime = util.current_time_millis()
-local function is_developer()
+local function devmode()
     local developer = {0x0C6E0653, 0x0EE24B30}
     local user = players.get_rockstar_id(players.user())
     for developer as id do
@@ -26,12 +27,8 @@ local function is_developer()
     end
     return false
 end
-util.ensure_package_is_installed("lua/auto-updater")
-local auto_updater = require("auto-updater")
-local auto_update_config = {
-    source_url="https://raw.githubusercontent.com/IlIlIlIIlIlIlIl/roothidelua-stand/main/Roothide.lua",
-    script_relpath=SCRIPT_RELPATH
-}
+
+--Enable Colours in Console
 util.ensure_package_is_installed("lua/luaffi")
 local ffi = require "luaffi"
 local kernel32 = ffi.open("kernel32")
@@ -45,8 +42,16 @@ if hSTDOUT ~= INVALID_HANDLE_VALUE then
         kernel32:call("SetConsoleMode", hSTDOUT, memory.read_int(mode) | ENABLE_VIRTUAL_TERMINAL_PROCESSING)
     end
 end
+
+--Auto Updater
+util.ensure_package_is_installed("lua/auto-updater")
+local auto_updater = require("auto-updater")
+local auto_update_config = {
+    source_url="https://raw.githubusercontent.com/IlIlIlIIlIlIlIl/roothidelua-stand/main/Roothide.lua",
+    script_relpath=SCRIPT_RELPATH
+}
 if async_http.have_access() then
-    if not is_developer() then
+    if not devmode() then
         auto_updater.run_auto_update(auto_update_config)
     else
         print("\x1B[1;35m[Roothide] \x1B[0;30;42mDev Mode Enabled\x1B[0m")
@@ -54,67 +59,74 @@ if async_http.have_access() then
 else
     util.toast("This Script needs Internet Access for the Auto Updater to work!")
 end
---------------
---Mᴇɴᴜ Sᴇᴛᴜᴘ--
---------------
 
-local roothide_menu = menu.attach_before(menu.ref_by_path("Stand>Settings"), menu.list(menu.shadow_root(), "Roothide", {"roothidescript"}, "Roothide Script"))
-roothide_menu:action("Stop Script", {}, "Stop the script.", function()
-    util.stop_script()
-end)
-menu.action(menu.my_root(), "Go To Script Menu", {}, "Go to the scripts main menu", function()
-    menu.ref_by_path("Stand>Roothide"):trigger()
-end)
-menu.action(menu.my_root(), "Check for Updates", {}, "The script will automatically check for updates at most daily, but you can manually check using this option anytime.", function()
-    auto_update_config.check_interval = 0
-    util.toast("Checking for updates")
-    if auto_updater.run_auto_update(auto_update_config) then
-        util.toast("No updates have been found.")
+-----Mᴇɴᴜ Sᴇᴛᴜᴘ-----
+
+    local roothide_menu = menu.attach_before(menu.ref_by_path("Stand>Settings"), menu.list(menu.shadow_root(), "Roothide", {"roothidescript"}, "Roothide Script"))
+    roothide_menu:action("Stop Script", {}, "Stop the script.", function()
+        util.stop_script()
+    end)
+    menu.action(menu.my_root(), "Go To Script Menu", {}, "Go to the scripts main menu", function()
+        menu.ref_by_path("Stand>Roothide"):trigger()
+    end)
+    menu.action(menu.my_root(), "Check for Updates", {}, "The script will automatically check for updates at most daily, but you can manually check using this option anytime.", function()
+        auto_update_config.check_interval = 0
+        util.toast("Checking for updates")
+        if auto_updater.run_auto_update(auto_update_config) then
+            util.toast("No updates have been found.")
+        end
+    end)
+    if SCRIPT_MANUAL_START then
+        menu.ref_by_path("Stand>Roothide"):trigger()
     end
-end)
-if SCRIPT_MANUAL_START then
-    menu.ref_by_path("Stand>Roothide"):trigger()
-end
 
----------
---Lɪsᴛs--
----------
+-----Mᴇɴᴜ Rᴏᴏᴛ-----
 
-local selflist = menu.list(roothide_menu, "Self", {}, "")
-local vehicleoptions = menu.list(roothide_menu, "Vehicle Options", {}, "")
-local online = menu.list(roothide_menu, "Online", {}, "")
-local world = menu.list(roothide_menu, "World", {}, "")
-local game = menu.list(roothide_menu, "Game", {}, "")
-local misc = menu.list(roothide_menu, "Misc", {}, "")
+    local selflist = menu.list(roothide_menu, "Self", {}, "")
+    local vehicleoptions = menu.list(roothide_menu, "Vehicle Options", {}, "")
+    local online = menu.list(roothide_menu, "Online", {}, "")
+    local world = menu.list(roothide_menu, "World", {}, "")
+    --local game = menu.list(roothide_menu, "Game", {}, "")
+    local misc = menu.list(roothide_menu, "Misc", {}, "")
+    roothide_menu:action("Check for Updates", {}, "The script will automatically check for updates at most daily, but you can manually check using this option anytime.", function()
+        auto_update_config.check_interval = 0
+        util.toast("Checking for updates")
+        if auto_updater.run_auto_update(auto_update_config) then
+            util.toast("No updates have been found.")
+        end
+    end)
 
-roothide_menu:action("Check for Updates", {}, "The script will automatically check for updates at most daily, but you can manually check using this option anytime.", function()
-    auto_update_config.check_interval = 0
-    util.toast("Checking for updates")
-    if auto_updater.run_auto_update(auto_update_config) then
-        util.toast("No updates have been found.")
-    end
-end)
+-----Cʜɪʟᴅ Lɪsᴛs-----
 
----------------
---Cʜɪʟᴅ Lɪsᴛs--
----------------
+    local seatswitcher = menu.list(vehicleoptions, "Switch Seat", {"switchseat", "seatswitch"}, "")
+    local traffic = menu.list(online, "Traffic", {}, "")
+    local kickall = menu.list(online, "Kick All Options", {}, "")
 
-local seatswitcher = menu.list(vehicleoptions, "Switch Seat", {"switchseat", "seatswitch"}, "")
-local session = menu.list(online, "Session", {}, "")
-local traffic = menu.list(online, "Traffic", {}, "")
-
--------------
---Sᴇʟғ Lɪsᴛ--
--------------
+-----Sᴇʟғ Lɪsᴛ-----
 
     selflist:toggle_loop("True No Ragdoll", {}, "Speeds up getting up after being knocked down.", function()
         SET_PED_CONFIG_FLAG(players.user_ped(), 227, IS_PLAYER_PLAYING(players.user()))
     end)
 
-------------------------
---Vᴇʜɪᴄʟᴇ Oᴘᴛɪᴏɴs Lɪsᴛ​​​​--
-------------------------
+-----Vᴇʜɪᴄʟᴇ Oᴘᴛɪᴏɴs Lɪsᴛ---​​​​--
 
+    -----seatswitcher-----
+        seatswitcher:action("Driver Seat", {"seatdriver"}, "Warp into driver seat.", function()
+            SET_PED_INTO_VEHICLE(GET_PLAYER_PED_SCRIPT_INDEX(players.user()), entities.get_user_vehicle_as_handle(), -1)end)
+        seatswitcher:action("Passenger Seat", {"seatpassenger"}, "Warp into passenger seat.", function()
+            SET_PED_INTO_VEHICLE(GET_PLAYER_PED_SCRIPT_INDEX(players.user()), entities.get_user_vehicle_as_handle(), 0)end)
+        seatswitcher:toggle("Prevent Auto Seat Shuffle", {"noshuffle"}, "Prevents auto shuffling over to drivers seat if it becomes free.", function(toggled)
+            SET_PED_CONFIG_FLAG(GET_PLAYER_PED_SCRIPT_INDEX(players.user()), 184, toggled)end)
+        seatswitcher:action("Left Rear", {}, "Warp into rear left seat.", function()
+            SET_PED_INTO_VEHICLE(GET_PLAYER_PED_SCRIPT_INDEX(players.user()), entities.get_user_vehicle_as_handle(), 1)end)
+        seatswitcher:action("Right Rear", {}, "Warp into rear right seat.", function()
+            SET_PED_INTO_VEHICLE(GET_PLAYER_PED_SCRIPT_INDEX(players.user()), entities.get_user_vehicle_as_handle(), 2)
+        end)
+        -- Moreinfo of Seat Index
+            -- DriverSeat = -1
+            -- Passenger = 0
+            -- Left Rear = 1
+            -- RightRear = 2
     vehicleoptions:toggle_loop("Engine Always On", {"alwayson"}, "Keeps the engine and lights running when you exit the vehicle.", function()
         local vehicle = GET_VEHICLE_PED_IS_IN(PLAYER_PED_ID(), false)
         if DOES_ENTITY_EXIST(vehicle) then
@@ -122,105 +134,80 @@ local traffic = menu.list(online, "Traffic", {}, "")
         SET_VEHICLE_LIGHTS(vehicle, 0)
         end
     end)
-
-        ------------------------
-        --random garage vehicle--
-        -------------------------
-            local function get_all_vehicles(dir)
-                local paths = {}
-                for filesystem.list_files(dir) as file do
-                    if filesystem.is_dir(file) then
-                        for get_all_vehicles(file) as subfile do
-                            table.insert(paths, subfile)
-                        end
-                    else
-                        if string.sub(file, -4) == ".txt" then
-                            table.insert(paths, file)
-                        end
+    -----random garage vehicle-----
+        local function get_all_vehicles(dir)
+            local paths = {}
+            for filesystem.list_files(dir) as file do
+                if filesystem.is_dir(file) then
+                    for get_all_vehicles(file) as subfile do
+                        table.insert(paths, subfile)
                     end
-                end
-                return paths
-            end
-            local function vehicle_path_to_stand_ref(path)
-                return menu.ref_by_path("Vehicle>Garage>" .. string.gsub(string.sub(string.sub(path, -((#path) - (#(filesystem.stand_dir() .. [[Vehicles\]])))), 1, -5), "\\", ">"))
-            end
-            vehicleoptions:action("Random Stand Garage Vehicle", {"randomvehicle", "rv"}, "Picks a random vehicle from your Stand garage.", function()
-                    local vehicles_dir = filesystem.stand_dir() .. "Vehicles"
-                    local all_vehicles = get_all_vehicles(vehicles_dir)
-                    local random_vehicle = all_vehicles[math.random(#all_vehicles)]
-                    local stand_ref = vehicle_path_to_stand_ref(random_vehicle)
-                        menu.focus(stand_ref)
-            end)
-        ----------------
-        --seatswitcher--
-        ----------------
-            -- Moreinfo of Seat Index
-            -- DriverSeat = -1
-            -- Passenger = 0
-            -- Left Rear = 1
-            -- RightRear = 2
-            seatswitcher:action("Driver Seat", {"seatdriver"}, "Warp into driver seat.", function()
-            SET_PED_INTO_VEHICLE(GET_PLAYER_PED_SCRIPT_INDEX(players.user()), entities.get_user_vehicle_as_handle(), -1)end)
-            seatswitcher:action("Passenger Seat", {"seatpassenger"}, "Warp into passenger seat.", function()
-            SET_PED_INTO_VEHICLE(GET_PLAYER_PED_SCRIPT_INDEX(players.user()), entities.get_user_vehicle_as_handle(), 0)end)
-            seatswitcher:toggle("Prevent Auto Seat Shuffle", {"noshuffle"}, "Prevents auto shuffling over to drivers seat if it becomes free.", function(toggled)
-            SET_PED_CONFIG_FLAG(GET_PLAYER_PED_SCRIPT_INDEX(players.user()), 184, toggled)end)
-            seatswitcher:action("Left Rear", {}, "Warp into rear left seat.", function()
-            SET_PED_INTO_VEHICLE(GET_PLAYER_PED_SCRIPT_INDEX(players.user()), entities.get_user_vehicle_as_handle(), 1)end)
-            seatswitcher:action("Right Rear", {}, "Warp into rear right seat.", function()
-            SET_PED_INTO_VEHICLE(GET_PLAYER_PED_SCRIPT_INDEX(players.user()), entities.get_user_vehicle_as_handle(), 2)end)
-
----------------
---Oɴʟɪɴᴇ Lɪsᴛ--
----------------
-
-    session:action("Kick All (Love Letter)", {"llkickall"}, "Love Letter kicks everyone. Should only be used when host.", function()
-        for _, pid in ipairs(players.list_except(true, false, false, false)) do
-            menu.ref_by_rel_path(menu.player_root(pid), "Kick>Love Letter"):trigger()
-        end
-    end)
-    session:action("Kick All (Smart Kick)", {"kickall"}, "Removes everyone that it can, excluding friends and modders.", function()
-        for _, pid in ipairs(players.list_except(true, true, false, false)) do
-            if not players.is_marked_as_modder(pid) then
-                menu.ref_by_rel_path(menu.player_root(pid), "Kick>Smart"):trigger()
-            end
-        end
-    end)
-        -----------
-        --Traffic--
-        -----------
-            traffic:toggle("Stand NoModPop Shortcut", {}, "Enables Stands 'Delete Modded Pop Multiplier Areas' in Online > Protections > Delete Modded Pop Multiplier Areas.", function(on)
-                if menu.ref_by_path("Online>Protections>Delete Modded Pop Multiplier Areas").value ~= on then menu.ref_by_path("Online>Protections>Delete Modded Pop Multiplier Areas").value = on end
-            end)
-            traffic:toggle_loop("Delete Modded Pop Multiplier Areas", {""}, "Deletes modded population multiplier areas that stand misses", function()
-                for i = 0, 15 do
-                    if DOES_POP_MULTIPLIER_AREA_EXIST(i) then
-                        if IS_POP_MULTIPLIER_AREA_NETWORKED(i) then
-                            util.toast($"Found a NETWORKED Pop Multiplier Area with ID: {i}... Removing...")
-                        else
-                            util.toast($"Found a NON-NETWORKED Pop Multiplier Area with ID: {i}... Removing...")
-                        end
-                    end
-                    REMOVE_POP_MULTIPLIER_AREA(i, true)
-                end
-            end)
-            traffic:toggle("No Traffic", {}, "Clears traffic for all players by adding a networked population multiplier.", function(on)
-                if on then
-                    ped_sphere = 0.0
-                    traffic_sphere = 0.0
-                    pop_multiplier_id = ADD_POP_MULTIPLIER_SPHERE(1.1, 1.1, 1.1, 15000.0, ped_sphere, traffic_sphere, false, true)
-                    CLEAR_AREA(1.1, 1.1, 1.1, 19999.9, true, false, false, true)
                 else
-                    REMOVE_POP_MULTIPLIER_SPHERE(pop_multiplier_id, false);
-                end
-            end)
-        --
-    local showspeakerson = online:toggle_loop("Show speakers", {"showspeakers"}, "Accurately shows who is talking as soon as it happens. Better than vanilla.", function()
-            for players.list(true, true, true) as pid do
-                if NETWORK_IS_PLAYER_TALKING(pid) then
-                    util.draw_debug_text(players.get_name(pid).." is talking")
+                    if string.sub(file, -4) == ".txt" then
+                        table.insert(paths, file)
+                    end
                 end
             end
+            return paths
+        end
+        local function vehicle_path_to_stand_ref(path)
+            return menu.ref_by_path("Vehicle>Garage>" .. string.gsub(string.sub(string.sub(path, -((#path) - (#(filesystem.stand_dir() .. [[Vehicles\]])))), 1, -5), "\\", ">"))
+        end
+        vehicleoptions:action("Random Stand Garage Vehicle", {"randomvehicle", "rv"}, "Picks a random vehicle from your Stand garage.", function()
+                local vehicles_dir = filesystem.stand_dir() .. "Vehicles"
+                local all_vehicles = get_all_vehicles(vehicles_dir)
+                local random_vehicle = all_vehicles[math.random(#all_vehicles)]
+                local stand_ref = vehicle_path_to_stand_ref(random_vehicle)
+                    menu.focus(stand_ref)
+        end)
+
+-----Oɴʟɪɴᴇ Lɪsᴛ-----
+
+    -----Traffic-----
+        traffic:toggle("Stand NoModPop Shortcut", {}, "Enables Stands 'Delete Modded Pop Multiplier Areas' in Online > Protections > Delete Modded Pop Multiplier Areas.", function(on)
+            if menu.ref_by_path("Online>Protections>Delete Modded Pop Multiplier Areas").value ~= on then menu.ref_by_path("Online>Protections>Delete Modded Pop Multiplier Areas").value = on end
+        end)
+        traffic:toggle_loop("Delete Modded Pop Multiplier Areas", {""}, "Deletes modded population multiplier areas that stand misses", function()
+            for i = 0, 15 do
+                if DOES_POP_MULTIPLIER_AREA_EXIST(i) then
+                    if IS_POP_MULTIPLIER_AREA_NETWORKED(i) then
+                        util.toast($"Found a NETWORKED Pop Multiplier Area with ID: {i}... Removing...")
+                    else
+                        util.toast($"Found a NON-NETWORKED Pop Multiplier Area with ID: {i}... Removing...")
+                    end
+                end
+                REMOVE_POP_MULTIPLIER_AREA(i, true)
+            end
+        end)
+        traffic:toggle("No Traffic", {}, "Clears traffic for all players by adding a networked population multiplier.", function(on)
+            if on then
+                ped_sphere = 0.0
+                traffic_sphere = 0.0
+                pop_multiplier_id = ADD_POP_MULTIPLIER_SPHERE(1.1, 1.1, 1.1, 15000.0, ped_sphere, traffic_sphere, false, true)
+                CLEAR_AREA(1.1, 1.1, 1.1, 19999.9, true, false, false, true)
+            else
+                REMOVE_POP_MULTIPLIER_SPHERE(pop_multiplier_id, false);
+            end
+        end)
+    -----kickall-----
+        kickall:action("Kick All (Love Letter)", {"llkickall"}, "Love Letter kicks everyone. Should only be used when host.", function()
+            for _, pid in ipairs(players.list_except(true, false, false, false)) do
+                menu.ref_by_rel_path(menu.player_root(pid), "Kick>Love Letter"):trigger()
+            end
+        end)
+        kickall:action("Kick All (Smart Kick)", {"kickall"}, "Removes everyone that it can, excluding friends and modders.", function()
+            for _, pid in ipairs(players.list_except(true, true, false, false)) do
+                if not players.is_marked_as_modder(pid) then
+                    menu.ref_by_rel_path(menu.player_root(pid), "Kick>Smart"):trigger()
+                end
+            end
+        end)
+    local showspeakerson = online:toggle_loop("Show speakers", {"showspeakers"}, "Accurately shows who is talking as soon as it happens. Better than vanilla.", function()
+        for players.list(true, true, true) as pid do
+            if NETWORK_IS_PLAYER_TALKING(pid) then
+                util.draw_debug_text(players.get_name(pid).." is talking")
+            end
+        end
     end)
     showspeakerson.value = true
     online:toggle_loop("Hide Help Text", {"hidehelptext"}, "", function() 
@@ -233,10 +220,27 @@ local traffic = menu.list(online, "Traffic", {}, "")
             NETWORK_END_TUTORIAL_SESSION()
         end
     end)
-    --online:toggle_loop("Log Chat To Console", {}, "", function()
----------
---Wᴏʀʟᴅ​​​​​​​​​--
----------
+    -----logchat-----
+    local logChatEnabled = false
+    local function onChatMessage(sender, reserved, text, team_chat, networked, is_auto)
+        if logChatEnabled then
+            local ANSI_RESET = "\x1b[0m" -- Reset to default colour
+            local ANSI_YELLOW = "\x1b[0;33m" -- Yellow colour code
+            local ANSI_GREEN = "\x1b[1;32m" -- Green colour code
+    
+            local playerName = players.get_name(sender)
+            local logColour = team_chat and ANSI_GREEN or ANSI_YELLOW
+            local logChatMessage = logColour .. playerName .. " [" .. (team_chat and "TEAM" or "ALL") .. "] " .. text .. ANSI_RESET
+            util.log(logChatMessage)
+        end
+    end
+    chat.on_message(onChatMessage)
+    online:toggle("Log Chat To Console With Coloured Text", {}, "", function(on)
+        logChatEnabled = on
+    end)
+    
+-----Wᴏʀʟᴅ Lɪsᴛ​​​​​​​​​-----
+
     world:textslider("Clear Area", {}, "", {"Peds", "Vehicles", "Objects", "Pickups", "Projectiles", "Sounds"}, function(index, name)
         local counter = 0
         switch index do
@@ -305,14 +309,10 @@ local traffic = menu.list(online, "Traffic", {}, "")
         util.toast("Super cleanse is complete! " .. ct .. " entities removed.")
     end)
 
---------
---Gᴀᴍᴇ--
---------
+-----Gᴀᴍᴇ Lɪsᴛ-----
 
+-----Mɪsᴄ Lɪsᴛ-----
 
---------
---Mɪsᴄ--
---------
     misc:toggle_loop("Display NAT Type In Info Overlay", {}, "", function()
     	local natTypes = {"Open", "Moderate", "Strict"}
         local getNatType = util.stat_get_int64("_NatType")
@@ -323,11 +323,9 @@ local traffic = menu.list(online, "Traffic", {}, "")
         end
     end)
 
----------
---Debug--
----------
+-----DebugList-----
 
-    if is_developer() then
+    if devmode() then
         local debuglist = menu.list(roothide_menu, "Debug", {}, "")
         debuglist:action("Restart Script", {}, "Goes through the script stop process, freshly loads the contents of the script file, and starts the main thread again.", function()
             util.restart_script()
@@ -337,53 +335,40 @@ local traffic = menu.list(online, "Traffic", {}, "")
         end)
 
     end
-------------------
+
 --Pʟᴀʏᴇʀ Oᴘᴛɪᴏɴs--
-------------------
-players.add_command_hook(function(pid, player_root)
-    player_menu = player_root:list("Roothide")
-    misc_list = player_menu:list("Misc")
 
-    player_root:getChildren()[1]:attachBefore(menu.shadow_root():action("Spectate", {}, "Toggles 'Nuts Method' Spectate on the player.", function()
-        menu.ref_by_rel_path(menu.player_root(pid), "Spectate>Nuts Method"):trigger()
-    end))
+    players.add_command_hook(function(pid, player_root)
+        player_menu = player_root:list("Roothide")
+        misc_list = player_menu:list("Misc")
 
-    misc_list:action("LoveLetterKick Quick Access Command", {"llk"}, "", function()
-        menu.ref_by_rel_path(menu.player_root(pid), "Kick>Love Letter"):trigger()
+        player_root:getChildren()[1]:attachBefore(menu.shadow_root():action("Spectate", {}, "Toggles 'Nuts Method' Spectate on the player.", function()
+            menu.ref_by_rel_path(menu.player_root(pid), "Spectate>Nuts Method"):trigger()
+        end))
+
+        misc_list:action("LoveLetterKick Quick Access Command", {"llk"}, "", function()
+            menu.ref_by_rel_path(menu.player_root(pid), "Kick>Love Letter"):trigger()
+        end)
+        misc_list:action("Set Waypoint", {"swp"}, "", function()
+            local pos = players.get_position(pid)
+            SET_NEW_WAYPOINT(pos.x, pos.y)
+        end)
+    	local ghostPlayer
+    	ghostPlayer = misc_list:toggle_loop("Ghost Player", {"ghost"}, "Ghosts the selected player.", function()
+    		if pid == players.user() then 
+    			util.toast(lang.get_localised(-1974706693))
+    			ghostPlayer.value = false
+    			return
+    		end
+    		if not players.exists(pid) then
+    			ghostPlayer.value = false
+    			return
+    		end
+    		SET_REMOTE_PLAYER_AS_GHOST(pid, true)
+    	end, function()
+    		SET_REMOTE_PLAYER_AS_GHOST(pid, false)
+    	end)
     end)
-    misc_list:action("Set Waypoint", {"swp"}, "", function()
-        local pos = players.get_position(pid)
-        SET_NEW_WAYPOINT(pos.x, pos.y)
-    end)
-	local ghostPlayer
-	ghostPlayer = misc_list:toggle_loop("Ghost Player", {"ghost"}, "Ghosts the selected player.", function()
-		if pid == players.user() then 
-			util.toast(lang.get_localised(-1974706693))
-			ghostPlayer.value = false
-			return
-		end
-		if not players.exists(pid) then
-			ghostPlayer.value = false
-			return
-		end
-		SET_REMOTE_PLAYER_AS_GHOST(pid, true)
-	end, function()
-		SET_REMOTE_PLAYER_AS_GHOST(pid, false)
-	end)
-end)
-
-local ANSI_RESET = "\x1b[0m" -- Reset to default colour
-local ANSI_YELLOW = "\x1b[0;33m" -- Yellow colour code
-local ANSI_GREEN = "\x1b[1;32m" -- Green colour code
-
-local function onChatMessage(sender, reserved, text, team_chat, networked, is_auto)
-    local playerName = players.get_name(sender)
-    local teamColour = team_chat and ANSI_GREEN or ANSI_YELLOW
-    local logChatMessage = teamColour .. playerName .. " [" .. (team_chat and "TEAM" or "ALL") .. "] " .. text .. ANSI_RESET
-    util.log(logChatMessage)
-end
-
-chat.on_message(onChatMessage)
 
 util.log(string.format("\x1B[1;35m[Roothide] \x1B[0;37mScript loaded in %dms\x1B[0m", util.current_time_millis() - scriptStartTime))
 --[[
