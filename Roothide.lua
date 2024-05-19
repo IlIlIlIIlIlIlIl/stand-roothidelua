@@ -134,6 +134,22 @@ end
         SET_VEHICLE_LIGHTS(vehicle, 0)
         end
     end)
+    local last_vehicle_with_radio_off = 0
+    vehicleoptions:toggle_loop("Turn Radio Off Automatically", {}, "Turns off the radio each time you get in a vehicle.", function()
+        local current_vehicle = GET_VEHICLE_PED_IS_IN(PLAYER_PED_ID(), false)
+        if current_vehicle ~= 0 then
+            if last_vehicle_with_radio_off ~= current_vehicle and GET_IS_VEHICLE_ENGINE_RUNNING(current_vehicle) then
+                if IS_VEHICLE_RADIO_ON(current_vehicle) then
+                    util.yield(850)
+                    SET_RADIO_TO_STATION_NAME("OFF")
+                    util.toast("Radio off")
+                end
+                last_vehicle_with_radio_off = current_vehicle
+            end
+        else
+            last_vehicle_with_radio_off = 0
+        end
+    end)
     -----random garage vehicle-----
         local function get_all_vehicles(dir)
             local paths = {}
@@ -238,7 +254,7 @@ end
     online:toggle("Log Chat To Console With Coloured Text", {}, "", function(on)
         logChatEnabled = on
     end)
-    
+
 -----Wᴏʀʟᴅ Lɪsᴛ​​​​​​​​​-----
 
     world:textslider("Clear Area", {}, "", {"Peds", "Vehicles", "Objects", "Pickups", "Projectiles", "Sounds"}, function(index, name)
