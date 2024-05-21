@@ -236,24 +236,42 @@ end
             NETWORK_END_TUTORIAL_SESSION()
         end
     end)
-    -----logchat-----
-    local logChatEnabled = false
-    local function onChatMessage(sender, reserved, text, team_chat, networked, is_auto)
-        if logChatEnabled then
-            local ANSI_RESET = "\x1b[0m" -- Reset to default colour
-            local ANSI_YELLOW = "\x1b[0;33m" -- Yellow colour code
-            local ANSI_GREEN = "\x1b[1;32m" -- Green colour code
-    
-            local playerName = players.get_name(sender)
-            local logColour = team_chat and ANSI_GREEN or ANSI_YELLOW
-            local logChatMessage = logColour .. playerName .. " [" .. (team_chat and "TEAM" or "ALL") .. "] " .. text .. ANSI_RESET
-            util.log(logChatMessage)
+    -----scripthostloop-----
+        local isScriptHostLoopActive = false
+        local function scripthostloop()
+            while isScriptHostLoopActive do
+                if players.get_script_host() ~= players.user() then
+                    local playerName = players.get_name(players.user())  -- Get the user's name
+                    menu.trigger_commands("givesh" .. playerName)  -- Trigger the command to become script host
+                    print("\x1B[1;35m[Script Host Loop] \x1B[0;30;42mBecoming script host...\x1B[0m")
+                end
+                util.yield(5000)
+            end
         end
-    end
-    chat.on_message(onChatMessage)
-    online:toggle("Log Chat To Console With Coloured Text", {}, "", function(on)
-        logChatEnabled = on
-    end)
+        online:toggle("Script Host Loop", {"scripthostloop"}, "Constantly become the script host.", function(state)
+            isScriptHostLoopActive = state
+            if state then
+                util.create_thread(scripthostloop)
+            end
+        end)
+    -----logchat-----
+        local logChatEnabled = false
+        local function onChatMessage(sender, reserved, text, team_chat, networked, is_auto)
+            if logChatEnabled then
+                local ANSI_RESET = "\x1b[0m" -- Reset to default colour
+                local ANSI_YELLOW = "\x1b[0;33m" -- Yellow colour code
+                local ANSI_GREEN = "\x1b[1;32m" -- Green colour code
+            
+                local playerName = players.get_name(sender)
+                local logColour = team_chat and ANSI_GREEN or ANSI_YELLOW
+                local logChatMessage = logColour .. playerName .. " [" .. (team_chat and "TEAM" or "ALL") .. "] " .. text .. ANSI_RESET
+                util.log(logChatMessage)
+            end
+        end
+        chat.on_message(onChatMessage)
+        online:toggle("Log Chat To Console With Coloured Text", {}, "", function(on)
+            logChatEnabled = on
+        end)
 
 -----Wᴏʀʟᴅ Lɪsᴛ​​​​​​​​​-----
 
@@ -338,6 +356,41 @@ end
             end
         end
     end)
+    -----baseballbatKnifeLiveries-----
+        local originalGunVanValues = {}     
+        local function setGlobalsForSpecialLiveries()
+            -- Store the original values
+            originalGunVanValues[34329] = memory.read_int(memory.script_global(262145 + 34329))
+            originalGunVanValues[34330] = memory.read_int(memory.script_global(262145 + 34329 + 1))
+        
+            for i = 25, 75 do
+                originalGunVanValues[34331 + i] = memory.read_int(memory.script_global(262145 + 34331 + i))
+            end
+        
+            -- Set the new values
+            memory.write_int(memory.script_global(262145 + 34329), 2508868239) -- PLACES KNIFE AND BAT INTO GUN VAN USING THEIR HASHES
+            memory.write_int(memory.script_global(262145 + 34329 + 1), 2578778090)
+        
+            for i = 25, 75 do
+                memory.write_int(memory.script_global(262145 + 34331 + i), 0) -- ONE OF THESE ENABLES BAT & KNIFE LIVERIES LOL!
+            end
+        end
+        local function restoreOriginalSpecialLiveriesGlobals()
+            -- Restore the original values
+            memory.write_int(memory.script_global(262145 + 34329), originalGunVanValues[34329])
+            memory.write_int(memory.script_global(262145 + 34329 + 1), originalGunVanValues[34330])
+        
+            for i = 25, 75 do
+                memory.write_int(memory.script_global(262145 + 34331 + i), originalGunVanValues[34331 + i])
+            end
+        end
+        misc:toggle("Baseball Bat & Knife Liveries", {"weaponLiveries"}, "Enable Before Going Into Gun Van Weapon Menu!\n!!!MAKE SURE YOU TURN OPTION OFF WHEN FINISHED!!!", function(on)
+            if on then
+                setGlobalsForSpecialLiveries()
+            else
+                restoreOriginalSpecialLiveriesGlobals()
+            end
+        end)
 
 -----DebugList-----
 
