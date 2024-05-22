@@ -17,6 +17,8 @@
 util.keep_running()
 util.require_natives("3095a", "g")
 local scriptStartTime = util.current_time_millis()
+
+--Functions
 local function devmode()
     local developer = {0x0C6E0653, 0x0EE24B30}
     local user = players.get_rockstar_id(players.user())
@@ -120,13 +122,13 @@ end
         seatswitcher:action("Left Rear", {}, "Warp into rear left seat.", function()
             SET_PED_INTO_VEHICLE(GET_PLAYER_PED_SCRIPT_INDEX(players.user()), entities.get_user_vehicle_as_handle(), 1)end)
         seatswitcher:action("Right Rear", {}, "Warp into rear right seat.", function()
-            SET_PED_INTO_VEHICLE(GET_PLAYER_PED_SCRIPT_INDEX(players.user()), entities.get_user_vehicle_as_handle(), 2)
+            SET_PED_INTO_VEHICLE(GET_PLAYER_PED_SCRIPT_INDEX(players.user()), entities.get_user_vehicle_as_handle(), 2)end)
+        local seatIndices = {3, 4, 5, 6, 7}
+        local seatLabels = {"Seat 5", "Seat 6", "Seat 7", "Seat 8", "Seat 9"}
+        seatswitcher:textslider_stateful("Other Seats", {}, "For anything larger than 4 seats", seatLabels, function(index, value)
+            local selectedSeatIndex = seatIndices[index]
+            SET_PED_INTO_VEHICLE(GET_PLAYER_PED_SCRIPT_INDEX(players.user()), entities.get_user_vehicle_as_handle(), selectedSeatIndex)
         end)
-        -- Moreinfo of Seat Index
-            -- DriverSeat = -1
-            -- Passenger = 0
-            -- Left Rear = 1
-            -- RightRear = 2
     vehicleoptions:toggle_loop("Engine Always On", {"alwayson"}, "Keeps the engine and lights running when you exit the vehicle.", function()
         local vehicle = GET_VEHICLE_PED_IS_IN(PLAYER_PED_ID(), false)
         if DOES_ENTITY_EXIST(vehicle) then
