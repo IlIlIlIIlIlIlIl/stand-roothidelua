@@ -18,19 +18,7 @@ util.keep_running()
 util.require_natives("3095a", "g")
 local scriptStartTime = util.current_time_millis()
 
---Functions
-local function devmode()
-    local developer = {0x0C6E0653, 0x0EE24B30}
-    local user = players.get_rockstar_id(players.user())
-    for developer as id do
-        if user == id then
-            return true
-        end
-    end
-    return false
-end
-
---Enable Colours in Console
+--Enable colours in Console
 util.ensure_package_is_installed("lua/luaffi")
 local ffi = require "luaffi"
 local kernel32 = ffi.open("kernel32")
@@ -43,6 +31,29 @@ if hSTDOUT ~= INVALID_HANDLE_VALUE then
     if kernel32:call("GetConsoleMode", hSTDOUT, mode) ~= 0 then
         kernel32:call("SetConsoleMode", hSTDOUT, memory.read_int(mode) | ENABLE_VIRTUAL_TERMINAL_PROCESSING)
     end
+end
+local colour <const> = table.freeze{
+    black = "30", red = "31",
+    green = "32", yellow = "33",
+    blue = "34", magenta = "35",
+    cyan = "36", white = "37"
+}
+
+--Functions
+local function devmode()
+    local developer = {0x0C6E0653, 0x0EE24B30}
+    local user = players.get_rockstar_id(players.user())
+    for developer as id do
+        if user == id then
+            return true
+        end
+    end
+    return false
+end
+
+local function roothidePrint(msg, msg2, ANSIcolour, bold)
+    local boldPrefix = bold and "0;" or "1;"
+    print("\x1b[" .. boldPrefix .. ANSIcolour .. "m" .. msg .. "\x1B[0m" .. msg2)
 end
 
 --Auto Updater
@@ -112,7 +123,7 @@ end
 
 -----Vᴇʜɪᴄʟᴇ Oᴘᴛɪᴏɴs Lɪsᴛ---​​​​--
 
-    -----seatswitcher-----
+    -----seatSwitcher-----
         seatswitcher:action("Driver Seat", {"seatdriver"}, "Warp into driver seat.", function()
             SET_PED_INTO_VEHICLE(GET_PLAYER_PED_SCRIPT_INDEX(players.user()), entities.get_user_vehicle_as_handle(), -1)end)
         seatswitcher:action("Passenger Seat", {"seatpassenger"}, "Warp into passenger seat.", function()
@@ -152,7 +163,7 @@ end
             last_vehicle_with_radio_off = 0
         end
     end)
-    -----random garage vehicle-----
+    -----randomGarageVehicle-----
         local function get_all_vehicles(dir)
             local paths = {}
             for filesystem.list_files(dir) as file do
@@ -207,7 +218,7 @@ end
                 REMOVE_POP_MULTIPLIER_SPHERE(pop_multiplier_id, false);
             end
         end)
-    -----kickall-----
+    -----kickAll-----
         kickall:action("Kick All (Love Letter)", {"llkickall"}, "Love Letter kicks everyone. Should only be used when host.", function()
             for _, pid in ipairs(players.list_except(true, false, false, false)) do
                 menu.ref_by_rel_path(menu.player_root(pid), "Kick>Love Letter"):trigger()
@@ -238,7 +249,7 @@ end
             NETWORK_END_TUTORIAL_SESSION()
         end
     end)
-    -----scripthostloop-----
+    -----scriptHostLoop-----
         local isScriptHostLoopActive = false
         local function scripthostloop()
             while isScriptHostLoopActive do
@@ -246,6 +257,7 @@ end
                     local playerName = players.get_name(players.user())  -- Get the user's name
                     menu.trigger_commands("givesh" .. playerName)  -- Trigger the command to become script host
                     print("\x1B[1;35m[Script Host Loop] \x1B[0;30;42mBecoming script host...\x1B[0m")
+                    util.toast("Becoming script host...")
                 end
                 util.yield(5000)
             end
@@ -256,14 +268,13 @@ end
                 util.create_thread(scripthostloop)
             end
         end)
-    -----logchat-----
+    -----logChat-----
+        local ANSI_RESET = "\x1b[0m" -- Reset to default colour
+        local ANSI_YELLOW = "\x1b[0;33m" -- Yellow Colour Code
+        local ANSI_GREEN = "\x1b[1;32m" -- Green Colour Code    
         local logChatEnabled = false
         local function onChatMessage(sender, reserved, text, team_chat, networked, is_auto)
             if logChatEnabled then
-                local ANSI_RESET = "\x1b[0m" -- Reset to default colour
-                local ANSI_YELLOW = "\x1b[0;33m" -- Yellow colour code
-                local ANSI_GREEN = "\x1b[1;32m" -- Green colour code
-            
                 local playerName = players.get_name(sender)
                 local logColour = team_chat and ANSI_GREEN or ANSI_YELLOW
                 local logChatMessage = logColour .. playerName .. " [" .. (team_chat and "TEAM" or "ALL") .. "] " .. text .. ANSI_RESET
@@ -358,7 +369,7 @@ end
             end
         end
     end)
-    -----baseballbatKnifeLiveries-----
+    -----baseballBatKnifeLiveries-----
         local originalGunVanValues = {}     
         local function setGlobalsForSpecialLiveries()
             -- Store the original values
@@ -409,7 +420,8 @@ end
 
 --Pʟᴀʏᴇʀ Oᴘᴛɪᴏɴs--
 
-    players.add_command_hook(function(pid, player_root)
+    local function handlePlayerOptions(pid)
+        player_root = menu.player_root(pid)
         player_menu = player_root:list("Roothide")
         misc_list = player_menu:list("Misc")
 
@@ -424,25 +436,27 @@ end
             local pos = players.get_position(pid)
             SET_NEW_WAYPOINT(pos.x, pos.y)
         end)
-    	local ghostPlayer
-    	ghostPlayer = misc_list:toggle_loop("Ghost Player", {"ghost"}, "Ghosts the selected player.", function()
-    		if pid == players.user() then 
-    			util.toast(lang.get_localised(-1974706693))
-    			ghostPlayer.value = false
-    			return
-    		end
-    		if not players.exists(pid) then
-    			ghostPlayer.value = false
-    			return
-    		end
-    		SET_REMOTE_PLAYER_AS_GHOST(pid, true)
-    	end, function()
-    		SET_REMOTE_PLAYER_AS_GHOST(pid, false)
-    	end)
-    end)
+        local ghostPlayer
+        ghostPlayer = misc_list:toggle_loop("Ghost Player", {"ghost"}, "Ghosts the selected player.", function()
+            if pid == players.user() then
+                util.toast(lang.get_localised(-1974706693))
+                ghostPlayer.value = false
+                return
+            end
+            if not players.exists(pid) then
+                ghostPlayer.value = false
+                return
+            end
+            SET_REMOTE_PLAYER_AS_GHOST(pid, true)
+        end, function()
+            SET_REMOTE_PLAYER_AS_GHOST(pid, false)
+        end)
+    end
 
-util.log(string.format("\x1B[1;35m[Roothide] \x1B[0;37mScript loaded in %dms\x1B[0m", util.current_time_millis() - scriptStartTime))
---[[
+players.add_command_hook(handlePlayerOptions)
+
+local ANSI_RED = "\x1b[0;31m" -- Red Colour Code
+local textLogo = [[ 
      ..      ...                                  s                   .       ..                  
   :~"8888x :"%888x                               :8      .uef^"      @88>   dF                    
  8    8888Xf  8888>         u.          u.      .88    :d88E         %8P   '88bu.                 
@@ -457,4 +471,7 @@ X88x. ?8888k  8888X   ...ue888b   ...ue888b    :888ooo `888E          .    '*888
   ^-==""      `""                                       `Y"   888     ""       ""         "YP'    
                                                              J88"                                 
                                                              @%                                   
-                                                           :"                                     ]]
+                                                           :"                                     
+]]
+print(ANSI_RED .. textLogo .. ANSI_RESET)
+print(string.format("\x1B[1;35m[Roothide] \x1B[0;37mScript loaded in %dms\x1B[0m", util.current_time_millis() - scriptStartTime))
