@@ -95,8 +95,8 @@ end
 
 -----Mᴇɴᴜ Rᴏᴏᴛ-----
 
-    local selflist = menu.list(roothide_menu, "Self", {}, "")
-    local vehicleoptions = menu.list(roothide_menu, "Vehicle Options", {}, "")
+    local selfList = menu.list(roothide_menu, "Self", {}, "")
+    local vehicleOptions = menu.list(roothide_menu, "Vehicle Options", {}, "")
     local online = menu.list(roothide_menu, "Online", {}, "")
     local world = menu.list(roothide_menu, "World", {}, "")
     --local game = menu.list(roothide_menu, "Game", {}, "")
@@ -111,36 +111,37 @@ end
 
 -----Cʜɪʟᴅ Lɪsᴛs-----
 
-    local seatswitcher = menu.list(vehicleoptions, "Switch Seat", {"switchseat", "seatswitch"}, "")
-    local traffic = menu.list(online, "Traffic", {}, "")
-    local kickall = menu.list(online, "Kick All Options", {}, "")
+    local seatSwitcher = vehicleOptions:list("Switch Seat", {"switchseat", "seatswitch"}, "")
+    local traffic = online:list("Traffic", {}, "")
+    local kickAll = online:list("Kick All Options", {}, "")
+    local clearAreaOptions = world:list("Clear Area Options", {}, "")
 
 -----Sᴇʟғ Lɪsᴛ-----
 
-    selflist:toggle_loop("True No Ragdoll", {}, "Speeds up getting up after being knocked down.", function()
+    selfList:toggle_loop("True No Ragdoll", {}, "Speeds up getting up after being knocked down.", function()
         SET_PED_CONFIG_FLAG(players.user_ped(), 227, IS_PLAYER_PLAYING(players.user()))
     end)
 
 -----Vᴇʜɪᴄʟᴇ Oᴘᴛɪᴏɴs Lɪsᴛ---​​​​--
 
     -----seatSwitcher-----
-        seatswitcher:action("Driver Seat", {"seatdriver"}, "Warp into driver seat.", function()
+        seatSwitcher:action("Driver Seat", {"seatdriver"}, "Warp into driver seat.", function()
             SET_PED_INTO_VEHICLE(GET_PLAYER_PED_SCRIPT_INDEX(players.user()), entities.get_user_vehicle_as_handle(), -1)end)
-        seatswitcher:action("Passenger Seat", {"seatpassenger"}, "Warp into passenger seat.", function()
+        seatSwitcher:action("Passenger Seat", {"seatpassenger"}, "Warp into passenger seat.", function()
             SET_PED_INTO_VEHICLE(GET_PLAYER_PED_SCRIPT_INDEX(players.user()), entities.get_user_vehicle_as_handle(), 0)end)
-        seatswitcher:toggle("Prevent Auto Seat Shuffle", {"noshuffle"}, "Prevents auto shuffling over to drivers seat if it becomes free.", function(toggled)
+        seatSwitcher:toggle("Prevent Auto Seat Shuffle", {"noshuffle"}, "Prevents auto shuffling over to drivers seat if it becomes free.", function(toggled)
             SET_PED_CONFIG_FLAG(GET_PLAYER_PED_SCRIPT_INDEX(players.user()), 184, toggled)end)
-        seatswitcher:action("Left Rear", {}, "Warp into rear left seat.", function()
+        seatSwitcher:action("Left Rear", {}, "Warp into rear left seat.", function()
             SET_PED_INTO_VEHICLE(GET_PLAYER_PED_SCRIPT_INDEX(players.user()), entities.get_user_vehicle_as_handle(), 1)end)
-        seatswitcher:action("Right Rear", {}, "Warp into rear right seat.", function()
+        seatSwitcher:action("Right Rear", {}, "Warp into rear right seat.", function()
             SET_PED_INTO_VEHICLE(GET_PLAYER_PED_SCRIPT_INDEX(players.user()), entities.get_user_vehicle_as_handle(), 2)end)
         local seatIndices = {3, 4, 5, 6, 7}
         local seatLabels = {"Seat 5", "Seat 6", "Seat 7", "Seat 8", "Seat 9"}
-        seatswitcher:textslider_stateful("Other Seats", {}, "For anything larger than 4 seats", seatLabels, function(index, value)
+        seatSwitcher:textslider_stateful("Other Seats", {}, "For anything larger than 4 seats", seatLabels, function(index, value)
             local selectedSeatIndex = seatIndices[index]
             SET_PED_INTO_VEHICLE(GET_PLAYER_PED_SCRIPT_INDEX(players.user()), entities.get_user_vehicle_as_handle(), selectedSeatIndex)
         end)
-    vehicleoptions:toggle_loop("Engine Always On", {"alwayson"}, "Keeps the engine and lights running when you exit the vehicle.", function()
+    vehicleOptions:toggle_loop("Engine Always On", {"alwayson"}, "Keeps the engine and lights running when you exit the vehicle.", function()
         local vehicle = GET_VEHICLE_PED_IS_IN(PLAYER_PED_ID(), false)
         if DOES_ENTITY_EXIST(vehicle) then
         SET_VEHICLE_ENGINE_ON(vehicle, true, true, true)
@@ -148,7 +149,7 @@ end
         end
     end)
     local last_vehicle_with_radio_off = 0
-    vehicleoptions:toggle_loop("Turn Radio Off Automatically", {}, "Turns off the radio each time you get in a vehicle.", function()
+    vehicleOptions:toggle_loop("Turn Radio Off Automatically", {}, "Turns off the radio each time you get in a vehicle.", function()
         local current_vehicle = GET_VEHICLE_PED_IS_IN(PLAYER_PED_ID(), false)
         if current_vehicle ~= 0 then
             if last_vehicle_with_radio_off ~= current_vehicle and GET_IS_VEHICLE_ENGINE_RUNNING(current_vehicle) then
@@ -182,7 +183,7 @@ end
         local function vehicle_path_to_stand_ref(path)
             return menu.ref_by_path("Vehicle>Garage>" .. string.gsub(string.sub(string.sub(path, -((#path) - (#(filesystem.stand_dir() .. [[Vehicles\]])))), 1, -5), "\\", ">"))
         end
-        vehicleoptions:action("Random Stand Garage Vehicle", {"randomvehicle", "rv"}, "Picks a random vehicle from your Stand garage.", function()
+        vehicleOptions:action("Random Stand Garage Vehicle", {"randomvehicle", "rv"}, "Picks a random vehicle from your Stand garage.", function()
                 local vehicles_dir = filesystem.stand_dir() .. "Vehicles"
                 local all_vehicles = get_all_vehicles(vehicles_dir)
                 local random_vehicle = all_vehicles[math.random(#all_vehicles)]
@@ -219,12 +220,12 @@ end
             end
         end)
     -----kickAll-----
-        kickall:action("Kick All (Love Letter)", {"llkickall"}, "Love Letter kicks everyone. Should only be used when host.", function()
+        kickAll:action("Kick All (Love Letter)", {"llkickall"}, "Love Letter kicks everyone. Should only be used when host.", function()
             for _, pid in ipairs(players.list_except(true, false, false, false)) do
                 menu.ref_by_rel_path(menu.player_root(pid), "Kick>Love Letter"):trigger()
             end
         end)
-        kickall:action("Kick All (Smart Kick)", {"kickall"}, "Removes everyone that it can, excluding friends and modders.", function()
+        kickAll:action("Kick All (Smart Kick)", {"kickall"}, "Removes everyone that it can, excluding friends and modders.", function()
             for _, pid in ipairs(players.list_except(true, true, false, false)) do
                 if not players.is_marked_as_modder(pid) then
                     menu.ref_by_rel_path(menu.player_root(pid), "Kick>Smart"):trigger()
@@ -239,10 +240,7 @@ end
         end
     end)
     showspeakerson.value = true
-    online:toggle_loop("Hide Help Text", {"hidehelptext"}, "", function() 
-    	HIDE_HELP_TEXT_THIS_FRAME()
-    end)
-    online:toggle("Create Safe Session In Current Session", {}, "Create a tutorial session inside current session that other players cannot join giving you a safe space to go afk.", function(on)
+    online:toggle("AFK Safe Session", {"afk"}, "Create a tutorial session inside current session that other players cannot join giving you a safe space to go afk.", function(on)
         if on then
             NETWORK_START_SOLO_TUTORIAL_SESSION()
         else
@@ -380,7 +378,7 @@ end
                 originalGunVanValues[34331 + i] = memory.read_int(memory.script_global(262145 + 34331 + i))
             end
         
-            -- Set the new values
+            -- Set the new values (Credit to ToxikSkull)
             memory.write_int(memory.script_global(262145 + 34329), 2508868239) -- PLACES KNIFE AND BAT INTO GUN VAN USING THEIR HASHES
             memory.write_int(memory.script_global(262145 + 34329 + 1), 2578778090)
         
@@ -451,8 +449,9 @@ end
         end, function()
             SET_REMOTE_PLAYER_AS_GHOST(pid, false)
         end)
-    end
 
+
+    end
 players.add_command_hook(handlePlayerOptions)
 
 local ANSI_RED = "\x1b[0;31m" -- Red Colour Code
