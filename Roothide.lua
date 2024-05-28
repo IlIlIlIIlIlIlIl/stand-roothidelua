@@ -115,6 +115,7 @@ end
     local seatSwitcher = vehicleOptions:list("Switch Seat", {"switchseat", "seatswitch"}, "")
     local protections = online:list("Protections",{"rhprotections"}, "")
     local traffic = online:list("Traffic", {}, "")
+    local ChatList = online:list("Chat Options", {}, "")
     local kickAll = online:list("Kick All Options", {}, "")
     local clearAreaOptions = world:list("Clear Area Options", {}, "")
 
@@ -228,6 +229,81 @@ end
                 REMOVE_POP_MULTIPLIER_SPHERE(pop_multiplier_id, false);
             end
         end)
+    -----chat-----
+        local commandBoxChat = ChatList:list("Command Box Chat")
+        local toggleChatHistory = menu.ref_by_path("Online>Chat>Always Open")
+            local disableChatInputAll = menu.ref_by_path("Game>Disables>Disable Game Inputs>MP_TEXT_CHAT_ALL")
+            local disableChatInputTeam = menu.ref_by_path("Game>Disables>Disable Game Inputs>MP_TEXT_CHAT_TEAM")
+            local showTyping
+            commandBoxChat:toggle_loop("Command Box Chat", {""}, "Use the command box to chat. Useful if chat is not opening when pressing 'T'.", function()
+                disableChatInputAll.value = true
+                disableChatInputTeam.value = true
+            
+                if not menu.command_box_is_open() then
+                    if util.is_key_down(0x54) then -- Key 'T'
+                        util.yield()
+                        if showTyping.value then
+                            for players.list(false) as pid do
+                                if players.exists(pid) then
+                                    util.trigger_script_event(1 << pid, {-1760661233, players.user(), pid, 8642}) -- Start Typing
+                                end
+                            end
+                        end
+                        menu.show_command_box("gmsg ")
+                        while menu.command_box_is_open() do
+                            toggleChatHistory.value = true
+                            util.yield()
+                        end
+                        toggleChatHistory.value = false
+                        util.yield(40)
+                        if showTyping.value then
+                            for players.list(false) as pid do
+                                if players.exists(pid) then
+                                    util.trigger_script_event(1 << pid, {476054205, players.user(), pid, 5689}) -- Stop Typing
+                                end
+                            end
+                        end
+                    elseif util.is_key_down(0x59) then -- Key 'Y'
+                        util.yield()
+                        if showTyping.value then
+                            for players.list(false) as pid do
+                                if players.exists(pid) then
+                                    util.trigger_script_event(1 << pid, {-1760661233, players.user(), pid, 8642}) -- Start Typing
+                                end
+                            end
+                        end
+                        menu.show_command_box("tmsg ")
+                        while menu.command_box_is_open() do
+                            toggleChatHistory.value = true
+                            util.yield()
+                        end
+                        toggleChatHistory.value = false
+                        util.yield(40)
+                        if showTyping.value then
+                            for players.list(false) as pid do
+                                if players.exists(pid) then
+                                    util.trigger_script_event(1 << pid, {476054205, players.user(), pid, 5689}) -- Stop Typing
+                                end
+                            end
+                        end
+                    end
+                end
+            end, function()
+                disableChatInputAll.value = false
+                disableChatInputTeam.value = false
+            end)
+            showTyping = commandBoxChat:toggle("Show typing", {"showtyping"}, "Should other players see if you are typing?", function()end)
+            showTyping.value = true
+            gMsgHidden = commandBoxChat:action("Send a Global Message", {"globalmessage", "gmsg"}, "", function(click_type)
+                menu.show_command_box($"gmsg "); end, function(input)
+                chat.send_message(input, false, true, true)
+            end)
+            tMsgHidden = commandBoxChat:action("Send a Team Message", {"teammessage", "tmsg"}, "", function(click_type)
+                menu.show_command_box($"tmsg "); end, function(input)
+                chat.send_message(input, true, true, true)
+            end)
+            menu.set_visible(gMsgHidden, false)
+            menu.set_visible(tMsgHidden, false)
     -----kickAll-----
         kickAll:action("Kick All (Love Letter)", {"llkickall"}, "Love Letter kicks everyone. Should only be used when host.", function()
             for _, pid in ipairs(players.list_except(true, false, false, false)) do
@@ -285,7 +361,7 @@ end
                 local playerName = players.get_name(sender)
                 local logColour = team_chat and ANSI_GREEN or ANSI_YELLOW
                 local logChatMessage = logColour .. playerName .. " [" .. (team_chat and "TEAM" or "ALL") .. "] " .. text .. ANSI_RESET
-                util.log(logChatMessage)
+                util.toast(logChatMessage, TOAST_CONSOLE)
             end
         end
         chat.on_message(onChatMessage)
@@ -345,23 +421,23 @@ end
             end
             util.toast($"Cleared {tostring(counter)} {name:lower()}.")
         end)
-        clearAreaOptions:action("Super Cleanse", {"supercleanse"}, "Uses stand API to instantly delete EVERY entity it finds (including player vehicles!).", function(on_click)
-            local ct = 0
+        clearAreaOptions:action("Super Cleanse", {"supercleanse"}, "Uses stand API to instantly delete EVERY entity it finds (including player vehicles!). \nIf control of entity cannot be obtained it will force deletion locally.", function(on_click)
+            local counter = 0
             for k,ent in pairs(entities.get_all_vehicles_as_handles()) do
                 entities.delete(ent)
-                ct = ct + 1
+                counter = counter + 1
             end
             for k,ent in pairs(entities.get_all_peds_as_handles()) do
                 if not IS_PED_A_PLAYER(ent) then
                     entities.delete(ent)
                 end
-                ct = ct + 1
+                counter = counter + 1
             end
             for k,ent in pairs(entities.get_all_objects_as_handles()) do
                 entities.delete(ent)
-                ct = ct + 1
+                counter = counter + 1
             end
-            util.toast("Super cleanse is complete! " .. ct .. " entities removed.")
+            util.toast("Super cleanse is complete! " .. counter .. " entities removed.")
         end)
 
 -----Gᴀᴍᴇ Lɪsᴛ-----
@@ -417,14 +493,14 @@ end
 
     if devmode() then
         local debuglist = menu.list(roothide_menu, "Debug", {}, "")
-
+        
         debuglist:action("Restart Script", {}, "Goes through the script stop process, freshly loads the contents of the script file, and starts the main thread again.", function()
             util.restart_script()
         end)
         debuglist:action("Log stand lang registered codes", {}, "", function()
             util.toast(lang.find_builtin("Movement"), TOAST_ABOVE_MAP | TOAST_CONSOLE)
         end)
-    
+        
     end
 
 --Pʟᴀʏᴇʀ Oᴘᴛɪᴏɴs--
