@@ -50,7 +50,18 @@ local function devmode()
     end
     return false
 end
+local function aboveMapToast(msg, title, subject, colour, dict, dictName) -- credit to wiriscript
+    title = title or 'Roothide'
+    subject = subject or ''
+    dict = dict or 'CHAR_MP_FM_CONTACT'
+    dictName = dictName or 'CHAR_MP_FM_CONTACT'
+    colour = colour or 2
 
+    THEFEED_SET_BACKGROUND_COLOR_FOR_NEXT_POST(colour)
+    util.BEGIN_TEXT_COMMAND_THEFEED_POST(msg)
+    END_TEXT_COMMAND_THEFEED_POST_MESSAGETEXT(dict, dictName, true, 7, title, subject)
+    END_TEXT_COMMAND_THEFEED_POST_TICKER(false, false)
+end
 local function roothidePrint(msg, msg2, ANSIcolour, bold)
     local boldPrefix = bold and "0;" or "1;"
     print("\x1b[" .. boldPrefix .. ANSIcolour .. "m" .. msg .. "\x1B[0m" .. msg2)
@@ -331,6 +342,28 @@ end
         else
             NETWORK_END_TUTORIAL_SESSION()
         end
+    end)
+    bst_detection = online:toggle("Detect BST", {"showbst", "detectbst"}, "Detect players using BST", function(state)
+        local size = 5
+        local event_data = memory.alloc(size * 8)
+
+        util.create_tick_handler(function()
+            if not bst_detection.value then
+                return false
+            end
+
+            for i = 0, GET_NUMBER_OF_EVENTS(1) do
+                local event = GET_EVENT_AT_INDEX(1, i)
+                if event == 174 and GET_EVENT_DATA(1, i, event_data, size) then
+                    local event_hash = memory.read_int(event_data)
+                    local pid = memory.read_int(event_data + (1 * 8))
+        
+                    if event_hash == 1489206770 then
+                        aboveMapToast($'{players.get_name(pid)} has collected BST', 'Roothide', '', 2)
+                    end
+                end
+            end
+        end)
     end)
     -----scriptHostLoop-----
         local isScriptHostLoopActive = false
