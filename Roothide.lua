@@ -343,7 +343,7 @@ end
             NETWORK_END_TUTORIAL_SESSION()
         end
     end)
-    bst_detection = online:toggle("Detect BST", {"showbst", "detectbst"}, "Detect players using BST", function(state)
+    bst_detection = online:toggle("Detect BST", {"showbst", "detectbst"}, "Detect players using BST", function(state) --credit to mrRobot
         local size = 5
         local event_data = memory.alloc(size * 8)
 
@@ -405,7 +405,7 @@ end
 -----Wᴏʀʟᴅ Lɪsᴛ​​​​​​​​​-----
 
     -----clearAreaOptions-----
-        clearAreaOptions:textslider("Clear Area", {}, "", {"Peds", "Vehicles", "Objects", "Pickups", "Projectiles", "Sounds"}, function(index, name)
+        clearAreaOptions:textslider("Clear Area", {}, "", {"Peds", "Vehicles", "Objects", "Pickups", "Projectiles", "Sounds"}, function(index, name) --from jinxscript
             local counter = 0
             switch index do
                 case 1:
@@ -477,15 +477,6 @@ end
 
 -----Mɪsᴄ Lɪsᴛ-----
 
-    misc:toggle_loop("Display NAT Type In Info Overlay", {}, "", function()
-    	local natTypes = {"Open", "Moderate", "Strict"}
-        local getNatType = util.stat_get_int64("_NatType")
-        for nat, natType in natTypes do
-            if getNatType == nat then
-                util.draw_debug_text($"NAT Type: {natType}")
-            end
-        end
-    end)
     -----baseballBatKnifeLiveries-----
         local originalGunVanValues = {}     
         local function setGlobalsForSpecialLiveries()
