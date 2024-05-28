@@ -91,7 +91,8 @@ end
     end)
     if SCRIPT_MANUAL_START then
         menu.ref_by_path("Stand>Roothide"):trigger()
-    end
+        PLAY_SOUND_FRONTEND(-1, "SPAWN", "BARRY_01_SOUNDSET", true)
+    end   
 
 -----Mᴇɴᴜ Rᴏᴏᴛ-----
 
@@ -112,6 +113,7 @@ end
 -----Cʜɪʟᴅ Lɪsᴛs-----
 
     local seatSwitcher = vehicleOptions:list("Switch Seat", {"switchseat", "seatswitch"}, "")
+    local protections = online:list("Protections",{"rhprotections"}, "")
     local traffic = online:list("Traffic", {}, "")
     local kickAll = online:list("Kick All Options", {}, "")
     local clearAreaOptions = world:list("Clear Area Options", {}, "")
@@ -193,6 +195,13 @@ end
 
 -----Oɴʟɪɴᴇ Lɪsᴛ-----
 
+    -----Protections-----
+        protections:action("Stop All Sounds", {"stopsounds"}, "", function()
+            for i = -1,100 do
+                STOP_SOUND(i)
+            end
+            util.toast("Stopped Sounds.")
+        end)
     -----Traffic-----
         traffic:toggle("Stand NoModPop Shortcut", {}, "Enables Stands 'Delete Modded Pop Multiplier Areas' in Online > Protections > Delete Modded Pop Multiplier Areas.", function(on)
             if menu.ref_by_path("Online>Protections>Delete Modded Pop Multiplier Areas").value ~= on then menu.ref_by_path("Online>Protections>Delete Modded Pop Multiplier Areas").value = on end
@@ -286,73 +295,74 @@ end
 
 -----Wᴏʀʟᴅ Lɪsᴛ​​​​​​​​​-----
 
-    world:textslider("Clear Area", {}, "", {"Peds", "Vehicles", "Objects", "Pickups", "Projectiles", "Sounds"}, function(index, name)
-        local counter = 0
-        switch index do
-            case 1:
-                for entities.get_all_peds_as_handles() as ped do
-                    if ped ~= players.user_ped() and not IS_PED_A_PLAYER(ped) then
-                        entities.delete_by_handle(ped)
+    -----clearAreaOptions-----
+        clearAreaOptions:textslider("Clear Area", {}, "", {"Peds", "Vehicles", "Objects", "Pickups", "Projectiles", "Sounds"}, function(index, name)
+            local counter = 0
+            switch index do
+                case 1:
+                    for entities.get_all_peds_as_handles() as ped do
+                        if ped ~= players.user_ped() and not IS_PED_A_PLAYER(ped) then
+                            entities.delete_by_handle(ped)
+                            counter += 1
+                            util.yield()
+                        end
+                    end
+                    break
+                case 2:
+                    for entities.get_all_vehicles_as_handles() as vehicle do    
+	    			local owner = entities.get_owner(vehicle)
+                        if vehicle ~= GET_VEHICLE_PED_IS_IN(players.user_ped(), false) and DECOR_GET_INT(vehicle, "Player_Vehicle") == 0 and (owner == players.user() or owner == -1) then
+                            entities.delete_by_handle(vehicle)
+                            counter += 1
+                        end
+                        util.yield()
+                    end
+                    break
+                case 3:
+                    for entities.get_all_objects_as_handles() as object do
+                        entities.delete_by_handle(object)
                         counter += 1
                         util.yield()
                     end
-                end
-                break
-            case 2:
-                for entities.get_all_vehicles_as_handles() as vehicle do    
-				local owner = entities.get_owner(vehicle)
-                    if vehicle ~= GET_VEHICLE_PED_IS_IN(players.user_ped(), false) and DECOR_GET_INT(vehicle, "Player_Vehicle") == 0 and (owner == players.user() or owner == -1) then
-                        entities.delete_by_handle(vehicle)
+                    break
+                case 4:
+                    for entities.get_all_pickups_as_handles() as pickup do
+                        entities.delete_by_handle(pickup)
                         counter += 1
+                        util.yield()
                     end
-                    util.yield()
-                end
+                    break
+                case 5:
+                    CLEAR_AREA_OF_PROJECTILES(players.get_position(players.user()), 1000.0, 0)
+                    counter = "all"
+                    break
+                case 6:
+                    for i = -1, 99 do
+                        STOP_SOUND(i)
+                        util.yield()
+                    end
                 break
-            case 3:
-                for entities.get_all_objects_as_handles() as object do
-                    entities.delete_by_handle(object)
-                    counter += 1
-                    util.yield()
-                end
-                break
-            case 4:
-                for entities.get_all_pickups_as_handles() as pickup do
-                    entities.delete_by_handle(pickup)
-                    counter += 1
-                    util.yield()
-                end
-                break
-            case 5:
-                CLEAR_AREA_OF_PROJECTILES(players.get_position(players.user()), 1000.0, 0)
-                counter = "all"
-                break
-            case 6:
-                for i = 0, 99 do
-                    STOP_SOUND(i)
-                    util.yield()
-                end
-            break
-        end
-        util.toast($"Cleared {tostring(counter)} {name:lower()}.")
-    end)
-    world:action("Super Cleanse", {"supercleanse"}, "Uses stand API to instantly delete EVERY entity it finds (including player vehicles!).", function(on_click)
-        local ct = 0
-        for k,ent in pairs(entities.get_all_vehicles_as_handles()) do
-            entities.delete(ent)
-            ct = ct + 1
-        end
-        for k,ent in pairs(entities.get_all_peds_as_handles()) do
-            if not IS_PED_A_PLAYER(ent) then
-                entities.delete(ent)
             end
-            ct = ct + 1
-        end
-        for k,ent in pairs(entities.get_all_objects_as_handles()) do
-            entities.delete(ent)
-            ct = ct + 1
-        end
-        util.toast("Super cleanse is complete! " .. ct .. " entities removed.")
-    end)
+            util.toast($"Cleared {tostring(counter)} {name:lower()}.")
+        end)
+        clearAreaOptions:action("Super Cleanse", {"supercleanse"}, "Uses stand API to instantly delete EVERY entity it finds (including player vehicles!).", function(on_click)
+            local ct = 0
+            for k,ent in pairs(entities.get_all_vehicles_as_handles()) do
+                entities.delete(ent)
+                ct = ct + 1
+            end
+            for k,ent in pairs(entities.get_all_peds_as_handles()) do
+                if not IS_PED_A_PLAYER(ent) then
+                    entities.delete(ent)
+                end
+                ct = ct + 1
+            end
+            for k,ent in pairs(entities.get_all_objects_as_handles()) do
+                entities.delete(ent)
+                ct = ct + 1
+            end
+            util.toast("Super cleanse is complete! " .. ct .. " entities removed.")
+        end)
 
 -----Gᴀᴍᴇ Lɪsᴛ-----
 
@@ -395,7 +405,7 @@ end
                 memory.write_int(memory.script_global(262145 + 34331 + i), originalGunVanValues[34331 + i])
             end
         end
-        misc:toggle("Baseball Bat & Knife Liveries", {"weaponLiveries"}, "Enable Before Going Into Gun Van Weapon Menu!\n!!!MAKE SURE YOU TURN OPTION OFF WHEN FINISHED!!!", function(on)
+        misc:toggle("Unlock Baseball Bat & Knife Liveries", {"weaponLiveries"}, "Temporarily unlocks liveries. Enable Before Going Into Gun Van Weapon Menu!\n!!!MAKE SURE YOU TURN OPTION OFF WHEN FINISHED!!!", function(on)
             if on then
                 setGlobalsForSpecialLiveries()
             else
@@ -407,13 +417,14 @@ end
 
     if devmode() then
         local debuglist = menu.list(roothide_menu, "Debug", {}, "")
+
         debuglist:action("Restart Script", {}, "Goes through the script stop process, freshly loads the contents of the script file, and starts the main thread again.", function()
             util.restart_script()
         end)
         debuglist:action("Log stand lang registered codes", {}, "", function()
             util.toast(lang.find_builtin("Movement"), TOAST_ABOVE_MAP | TOAST_CONSOLE)
         end)
-
+    
     end
 
 --Pʟᴀʏᴇʀ Oᴘᴛɪᴏɴs--
