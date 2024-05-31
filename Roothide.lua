@@ -359,25 +359,24 @@ end
             end
         end)
     end)
-    -------scriptHostLoop-----
-    --    local isScriptHostLoopActive = false
-    --    local function scripthostloop()
-    --        while isScriptHostLoopActive do
-    --            if players.get_script_host() ~= players.user() then
-    --                local playerName = players.get_name(players.user())  -- Get the user's name
-    --                menu.trigger_commands("givesh" .. playerName)  -- Trigger the command to become script host
-    --                util.toast("\x1B[1;35m[Script Host Loop] \x1B[0;30;42mBecoming script host...\x1B[0m", TOAST_CONSOLE)
-    --                util.toast("Becoming script host...")
-    --            end
-    --            util.yield(5000)
-    --        end
-    --    end
-    --    online:toggle("Script Host Loop", {"scripthostloop"}, "Constantly become the script host.", function(state)
-    --        isScriptHostLoopActive = state
-    --        if state then
-    --            util.create_thread(scripthostloop)
-    --        end
-    --    end)
+    -----scriptHostLoop-----
+        local isScriptHostLoopActive = false
+        local function scripthostloop()
+            while isScriptHostLoopActive do
+                if players.get_script_host() ~= players.user() then
+                    local playerName = players.get_name(players.user())  -- Get the user's name
+                    menu.trigger_commands("givesh" .. playerName)  -- Trigger the command to become script host
+                    util.toast("Becoming script host...")
+                end
+                util.yield_once()
+            end
+        end
+        online:toggle("Script Host Loop", {"scriptloop", "scripthostloop"}, "Constantly become the script host. This could break sessions.", function(state)
+            isScriptHostLoopActive = state
+            if state then
+                util.create_thread(scripthostloop)
+            end
+        end)
     -----logChat-----
         local logChatEnabled = false
         local function onChatMessage(sender, reserved, text, team_chat, networked, is_auto)
