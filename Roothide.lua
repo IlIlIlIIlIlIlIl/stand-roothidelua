@@ -32,12 +32,10 @@ if hSTDOUT ~= INVALID_HANDLE_VALUE then
         kernel32:call("SetConsoleMode", hSTDOUT, memory.read_int(mode) | ENABLE_VIRTUAL_TERMINAL_PROCESSING)
     end
 end
-local colour <const> = table.freeze{
-    black = "30", red = "31",
-    green = "32", yellow = "33",
-    blue = "34", magenta = "35",
-    cyan = "36", white = "37"
-}
+local ANSI_RESET = "\x1b[0m" -- Reset to default colour
+local ANSI_YELLOW = "\x1b[0;33m" -- Yellow Colour Code
+local ANSI_GREEN = "\x1b[1;32m" -- Green Colour Code
+local ANSI_RED = "\x1b[0;31m" -- Red Colour Code
 
 --Functions
 local function devmode()
@@ -50,21 +48,17 @@ local function devmode()
     end
     return false
 end
-local function aboveMapToast(msg, title, subject, colour, dict, dictName) -- credit to wiriscript
+local function aboveMapToast(msg, title, subject, notificationColour, dict, dictName) -- credit to wiriscript
     title = title or 'Roothide'
     subject = subject or ''
     dict = dict or 'CHAR_MP_FM_CONTACT'
     dictName = dictName or 'CHAR_MP_FM_CONTACT'
-    colour = colour or 2
+    notificationColour = notificationColour or 2
 
-    THEFEED_SET_BACKGROUND_COLOR_FOR_NEXT_POST(colour)
+    THEFEED_SET_BACKGROUND_COLOR_FOR_NEXT_POST(notificationColour)
     util.BEGIN_TEXT_COMMAND_THEFEED_POST(msg)
     END_TEXT_COMMAND_THEFEED_POST_MESSAGETEXT(dict, dictName, true, 7, title, subject)
     END_TEXT_COMMAND_THEFEED_POST_TICKER(false, false)
-end
-local function roothidePrint(msg, msg2, ANSIcolour, bold)
-    local boldPrefix = bold and "0;" or "1;"
-    print("\x1b[" .. boldPrefix .. ANSIcolour .. "m" .. msg .. "\x1B[0m" .. msg2)
 end
 
 --Auto Updater
@@ -78,7 +72,7 @@ if async_http.have_access() then
     if not devmode() then
         auto_updater.run_auto_update(auto_update_config)
     else
-        print("\x1B[1;35m[Roothide] \x1B[0;30;42mDev Mode Enabled\x1B[0m")
+        util.toast("\x1B[1;35m[Roothide] \x1B[0;30;42mDev Mode Enabled\x1B[0m", TOAST_CONSOLE)
     end
 else
     util.toast("This Script needs Internet Access for the Auto Updater to work!")
@@ -243,78 +237,78 @@ end
     -----chat-----
         local commandBoxChat = ChatList:list("Command Box Chat")
         local toggleChatHistory = menu.ref_by_path("Online>Chat>Always Open")
-            local disableChatInputAll = menu.ref_by_path("Game>Disables>Disable Game Inputs>MP_TEXT_CHAT_ALL")
-            local disableChatInputTeam = menu.ref_by_path("Game>Disables>Disable Game Inputs>MP_TEXT_CHAT_TEAM")
-            local showTyping
-            commandBoxChat:toggle_loop("Command Box Chat", {""}, "Use the command box to chat. Useful if chat is not opening when pressing 'T'.", function()
-                disableChatInputAll.value = true
-                disableChatInputTeam.value = true
-            
-                if not menu.command_box_is_open() then
-                    if util.is_key_down(0x54) then -- Key 'T'
+        local disableChatInputAll = menu.ref_by_path("Game>Disables>Disable Game Inputs>MP_TEXT_CHAT_ALL")
+        local disableChatInputTeam = menu.ref_by_path("Game>Disables>Disable Game Inputs>MP_TEXT_CHAT_TEAM")
+        local showTyping
+        commandBoxChat:toggle_loop("Command Box Chat", {""}, "Use the command box to chat. Useful if chat is not opening when pressing 'T'.", function()
+            disableChatInputAll.value = true
+            disableChatInputTeam.value = true
+        
+            if not menu.command_box_is_open() then
+                if util.is_key_down(0x54) and not (IS_PAUSE_MENU_ACTIVE() or IS_SYSTEM_UI_BEING_DISPLAYED()) then -- Key 'T'
+                    util.yield()
+                    if showTyping.value then
+                        for players.list(false) as pid do
+                            if players.exists(pid) then
+                                util.trigger_script_event(1 << pid, {-1760661233, players.user(), pid, 8642}) -- Start Typing
+                            end
+                        end
+                    end
+                    menu.show_command_box("gmsg ")
+                    while menu.command_box_is_open() do
+                        toggleChatHistory.value = true
                         util.yield()
-                        if showTyping.value then
-                            for players.list(false) as pid do
-                                if players.exists(pid) then
-                                    util.trigger_script_event(1 << pid, {-1760661233, players.user(), pid, 8642}) -- Start Typing
-                                end
+                    end
+                    toggleChatHistory.value = false
+                    util.yield(40)
+                    if showTyping.value then
+                        for players.list(false) as pid do
+                            if players.exists(pid) then
+                                util.trigger_script_event(1 << pid, {476054205, players.user(), pid, 5689}) -- Stop Typing
                             end
                         end
-                        menu.show_command_box("gmsg ")
-                        while menu.command_box_is_open() do
-                            toggleChatHistory.value = true
-                            util.yield()
-                        end
-                        toggleChatHistory.value = false
-                        util.yield(40)
-                        if showTyping.value then
-                            for players.list(false) as pid do
-                                if players.exists(pid) then
-                                    util.trigger_script_event(1 << pid, {476054205, players.user(), pid, 5689}) -- Stop Typing
-                                end
+                    end
+                elseif util.is_key_down(0x59) and not (IS_PAUSE_MENU_ACTIVE() or IS_SYSTEM_UI_BEING_DISPLAYED()) then -- Key 'T'
+                    util.yield()
+                    if showTyping.value then
+                        for players.list(false) as pid do
+                            if players.exists(pid) then
+                                util.trigger_script_event(1 << pid, {-1760661233, players.user(), pid, 8642}) -- Start Typing
                             end
                         end
-                    elseif util.is_key_down(0x59) then -- Key 'Y'
+                    end
+                    menu.show_command_box("tmsg ")
+                    while menu.command_box_is_open() do
+                        toggleChatHistory.value = true
                         util.yield()
-                        if showTyping.value then
-                            for players.list(false) as pid do
-                                if players.exists(pid) then
-                                    util.trigger_script_event(1 << pid, {-1760661233, players.user(), pid, 8642}) -- Start Typing
-                                end
-                            end
-                        end
-                        menu.show_command_box("tmsg ")
-                        while menu.command_box_is_open() do
-                            toggleChatHistory.value = true
-                            util.yield()
-                        end
-                        toggleChatHistory.value = false
-                        util.yield(40)
-                        if showTyping.value then
-                            for players.list(false) as pid do
-                                if players.exists(pid) then
-                                    util.trigger_script_event(1 << pid, {476054205, players.user(), pid, 5689}) -- Stop Typing
-                                end
+                    end
+                    toggleChatHistory.value = false
+                    util.yield(40)
+                    if showTyping.value then
+                        for players.list(false) as pid do
+                            if players.exists(pid) then
+                                util.trigger_script_event(1 << pid, {476054205, players.user(), pid, 5689}) -- Stop Typing
                             end
                         end
                     end
                 end
-            end, function()
-                disableChatInputAll.value = false
-                disableChatInputTeam.value = false
-            end)
-            showTyping = commandBoxChat:toggle("Show typing", {"showtyping"}, "Should other players see if you are typing?", function()end)
-            showTyping.value = true
-            gMsgHidden = commandBoxChat:action("Send a Global Message", {"globalmessage", "gmsg"}, "", function(click_type)
-                menu.show_command_box($"gmsg "); end, function(input)
-                chat.send_message(input, false, true, true)
-            end)
-            tMsgHidden = commandBoxChat:action("Send a Team Message", {"teammessage", "tmsg"}, "", function(click_type)
-                menu.show_command_box($"tmsg "); end, function(input)
-                chat.send_message(input, true, true, true)
-            end)
-            menu.set_visible(gMsgHidden, false)
-            menu.set_visible(tMsgHidden, false)
+            end
+        end, function()
+            disableChatInputAll.value = false
+            disableChatInputTeam.value = false
+        end)
+        showTyping = commandBoxChat:toggle("Show typing", {"showtyping"}, "Should other players see if you are typing?", function()end)
+        showTyping.value = true
+        gMsgHidden = commandBoxChat:action("Send a Global Message", {"globalmessage", "gmsg"}, "", function(click_type)
+            menu.show_command_box($"gmsg "); end, function(input)
+            chat.send_message(input, false, true, true)
+        end)
+        tMsgHidden = commandBoxChat:action("Send a Team Message", {"teammessage", "tmsg"}, "", function(click_type)
+            menu.show_command_box($"tmsg "); end, function(input)
+            chat.send_message(input, true, true, true)
+        end)
+        menu.set_visible(gMsgHidden, false)
+        menu.set_visible(tMsgHidden, false)
     -----kickAll-----
         kickAll:action("Kick All (Love Letter)", {"llkickall"}, "Love Letter kicks everyone. Should only be used when host.", function()
             for _, pid in ipairs(players.list_except(true, false, false, false)) do
@@ -343,7 +337,7 @@ end
             NETWORK_END_TUTORIAL_SESSION()
         end
     end)
-    bst_detection = online:toggle("Detect BST", {"showbst", "detectbst"}, "Detect players using BST", function(state) --credit to mrRobot
+    bst_detection = online:toggle("Detect BST", {"showbst", "detectbst"}, "Detect players using BST", function(state) --from mrRobot
         local size = 5
         local event_data = memory.alloc(size * 8)
 
@@ -365,29 +359,26 @@ end
             end
         end)
     end)
-    -----scriptHostLoop-----
-        local isScriptHostLoopActive = false
-        local function scripthostloop()
-            while isScriptHostLoopActive do
-                if players.get_script_host() ~= players.user() then
-                    local playerName = players.get_name(players.user())  -- Get the user's name
-                    menu.trigger_commands("givesh" .. playerName)  -- Trigger the command to become script host
-                    print("\x1B[1;35m[Script Host Loop] \x1B[0;30;42mBecoming script host...\x1B[0m")
-                    util.toast("Becoming script host...")
-                end
-                util.yield(5000)
-            end
-        end
-        online:toggle("Script Host Loop", {"scripthostloop"}, "Constantly become the script host.", function(state)
-            isScriptHostLoopActive = state
-            if state then
-                util.create_thread(scripthostloop)
-            end
-        end)
+    -------scriptHostLoop-----
+    --    local isScriptHostLoopActive = false
+    --    local function scripthostloop()
+    --        while isScriptHostLoopActive do
+    --            if players.get_script_host() ~= players.user() then
+    --                local playerName = players.get_name(players.user())  -- Get the user's name
+    --                menu.trigger_commands("givesh" .. playerName)  -- Trigger the command to become script host
+    --                util.toast("\x1B[1;35m[Script Host Loop] \x1B[0;30;42mBecoming script host...\x1B[0m", TOAST_CONSOLE)
+    --                util.toast("Becoming script host...")
+    --            end
+    --            util.yield(5000)
+    --        end
+    --    end
+    --    online:toggle("Script Host Loop", {"scripthostloop"}, "Constantly become the script host.", function(state)
+    --        isScriptHostLoopActive = state
+    --        if state then
+    --            util.create_thread(scripthostloop)
+    --        end
+    --    end)
     -----logChat-----
-        local ANSI_RESET = "\x1b[0m" -- Reset to default colour
-        local ANSI_YELLOW = "\x1b[0;33m" -- Yellow Colour Code
-        local ANSI_GREEN = "\x1b[1;32m" -- Green Colour Code    
         local logChatEnabled = false
         local function onChatMessage(sender, reserved, text, team_chat, networked, is_auto)
             if logChatEnabled then
@@ -565,7 +556,7 @@ end
     end
 players.add_command_hook(handlePlayerOptions)
 
-local ANSI_RED = "\x1b[0;31m" -- Red Colour Code
+
 local textLogo = [[ 
      ..      ...                                  s                   .       ..                  
   :~"8888x :"%888x                               :8      .uef^"      @88>   dF                    
@@ -583,5 +574,5 @@ X88x. ?8888k  8888X   ...ue888b   ...ue888b    :888ooo `888E          .    '*888
                                                              @%                                   
                                                            :"                                     
 ]]
-print(ANSI_RED .. textLogo .. ANSI_RESET)
-print(string.format("\x1B[1;35m[Roothide] \x1B[0;37mScript loaded in %dms\x1B[0m", util.current_time_millis() - scriptStartTime))
+util.toast(ANSI_RED .. textLogo .. ANSI_RESET, TOAST_CONSOLE)
+util.toast(string.format("\x1B[1;35m[Roothide] \x1B[0;37mScript loaded in %dms\x1B[0m", util.current_time_millis() - scriptStartTime), TOAST_CONSOLE)
