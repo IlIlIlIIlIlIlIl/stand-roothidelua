@@ -117,6 +117,7 @@ end
 
 -----Cʜɪʟᴅ Lɪsᴛs-----
 
+    local weapons = selfList:list("Weapons", {}, "")
     local seatSwitcher = vehicleOptions:list("Switch Seat", {"switchseat", "seatswitch"}, "")
     local protections = online:list("Protections",{"rhprotections"}, "")
     local traffic = online:list("Traffic", {}, "")
@@ -125,7 +126,29 @@ end
     local clearAreaOptions = world:list("Clear Area Options", {}, "")
 
 -----Sᴇʟғ Lɪsᴛ-----
-
+    
+    -----weapons-----
+        -----sniperAutoZoom-----
+            local sniper_hashes = {
+                100416529,  -- Sniper Rifle
+                205991906,  -- Heavy Sniper
+                177293209   -- Heavy Sniper MK2
+            }
+            local function is_sniper_weapon(weapon_hash)
+                for _, hash in ipairs(sniper_hashes) do
+                    if weapon_hash == hash then
+                        return true
+                    end
+                end
+                return false
+            end
+            weapons:toggle_loop("Sniper Auto Zoom", {}, "Automatically zooms when scoping in with sniper rifles.", function()
+                local player_ped = players.user_ped()
+                local current_weapon = GET_SELECTED_PED_WEAPON(player_ped)
+                if IS_AIM_CAM_ACTIVE() and is_sniper_weapon(current_weapon) then
+                        SET_CONTROL_VALUE_NEXT_FRAME(2, 42, 1.0)  -- Simulate holding the key to zoom in
+                end
+            end)
     selfList:toggle_loop("True No Ragdoll", {}, "Speeds up getting up after being knocked down.", function()
         SET_PED_CONFIG_FLAG(players.user_ped(), 227, IS_PLAYER_PLAYING(players.user()))
     end)
@@ -234,81 +257,82 @@ end
                 REMOVE_POP_MULTIPLIER_SPHERE(pop_multiplier_id, false);
             end
         end)
-    -----chat-----
-        local commandBoxChat = ChatList:list("Command Box Chat")
-        local toggleChatHistory = menu.ref_by_path("Online>Chat>Always Open")
-        local disableChatInputAll = menu.ref_by_path("Game>Disables>Disable Game Inputs>MP_TEXT_CHAT_ALL")
-        local disableChatInputTeam = menu.ref_by_path("Game>Disables>Disable Game Inputs>MP_TEXT_CHAT_TEAM")
-        local showTyping
-        commandBoxChat:toggle_loop("Command Box Chat", {""}, "Use the command box to chat. Useful if chat is not opening when pressing 'T'.", function()
-            disableChatInputAll.value = true
-            disableChatInputTeam.value = true
-        
-            if not menu.command_box_is_open() then
-                if util.is_key_down(0x54) and not (IS_PAUSE_MENU_ACTIVE() or IS_SYSTEM_UI_BEING_DISPLAYED()) then -- Key 'T'
-                    util.yield()
-                    if showTyping.value then
-                        for players.list(false) as pid do
-                            if players.exists(pid) then
-                                util.trigger_script_event(1 << pid, {-1760661233, players.user(), pid, 8642}) -- Start Typing
-                            end
-                        end
-                    end
-                    menu.show_command_box("gmsg ")
-                    while menu.command_box_is_open() do
-                        toggleChatHistory.value = true
+    -----chatList-----
+        -----commandBoxChat-----
+            local commandBoxChat = ChatList:list("Command Box Chat")
+            local toggleChatHistory = menu.ref_by_path("Online>Chat>Always Open")
+            local disableChatInputAll = menu.ref_by_path("Game>Disables>Disable Game Inputs>MP_TEXT_CHAT_ALL")
+            local disableChatInputTeam = menu.ref_by_path("Game>Disables>Disable Game Inputs>MP_TEXT_CHAT_TEAM")
+            local showTyping
+            commandBoxChat:toggle_loop("Command Box Chat", {""}, "Use the command box to chat. Useful if chat is not opening when pressing 'T'.", function()
+                disableChatInputAll.value = true
+                disableChatInputTeam.value = true
+            
+                if not menu.command_box_is_open() then
+                    if util.is_key_down(0x54) and not (IS_PAUSE_MENU_ACTIVE() or IS_SYSTEM_UI_BEING_DISPLAYED()) then -- Key 'T'
                         util.yield()
-                    end
-                    toggleChatHistory.value = false
-                    util.yield(40)
-                    if showTyping.value then
-                        for players.list(false) as pid do
-                            if players.exists(pid) then
-                                util.trigger_script_event(1 << pid, {476054205, players.user(), pid, 5689}) -- Stop Typing
+                        if showTyping.value then
+                            for players.list(false) as pid do
+                                if players.exists(pid) then
+                                    util.trigger_script_event(1 << pid, {-1760661233, players.user(), pid, 8642}) -- Start Typing
+                                end
                             end
                         end
-                    end
-                elseif util.is_key_down(0x59) and not (IS_PAUSE_MENU_ACTIVE() or IS_SYSTEM_UI_BEING_DISPLAYED()) then -- Key 'T'
-                    util.yield()
-                    if showTyping.value then
-                        for players.list(false) as pid do
-                            if players.exists(pid) then
-                                util.trigger_script_event(1 << pid, {-1760661233, players.user(), pid, 8642}) -- Start Typing
+                        menu.show_command_box("gmsg ")
+                        while menu.command_box_is_open() do
+                            toggleChatHistory.value = true
+                            util.yield()
+                        end
+                        toggleChatHistory.value = false
+                        util.yield(40)
+                        if showTyping.value then
+                            for players.list(false) as pid do
+                                if players.exists(pid) then
+                                    util.trigger_script_event(1 << pid, {476054205, players.user(), pid, 5689}) -- Stop Typing
+                                end
                             end
                         end
-                    end
-                    menu.show_command_box("tmsg ")
-                    while menu.command_box_is_open() do
-                        toggleChatHistory.value = true
+                    elseif util.is_key_down(0x59) and not (IS_PAUSE_MENU_ACTIVE() or IS_SYSTEM_UI_BEING_DISPLAYED()) then -- Key 'T'
                         util.yield()
-                    end
-                    toggleChatHistory.value = false
-                    util.yield(40)
-                    if showTyping.value then
-                        for players.list(false) as pid do
-                            if players.exists(pid) then
-                                util.trigger_script_event(1 << pid, {476054205, players.user(), pid, 5689}) -- Stop Typing
+                        if showTyping.value then
+                            for players.list(false) as pid do
+                                if players.exists(pid) then
+                                    util.trigger_script_event(1 << pid, {-1760661233, players.user(), pid, 8642}) -- Start Typing
+                                end
+                            end
+                        end
+                        menu.show_command_box("tmsg ")
+                        while menu.command_box_is_open() do
+                            toggleChatHistory.value = true
+                            util.yield()
+                        end
+                        toggleChatHistory.value = false
+                        util.yield(40)
+                        if showTyping.value then
+                            for players.list(false) as pid do
+                                if players.exists(pid) then
+                                    util.trigger_script_event(1 << pid, {476054205, players.user(), pid, 5689}) -- Stop Typing
+                                end
                             end
                         end
                     end
                 end
-            end
-        end, function()
-            disableChatInputAll.value = false
-            disableChatInputTeam.value = false
-        end)
-        showTyping = commandBoxChat:toggle("Show typing", {"showtyping"}, "Should other players see if you are typing?", function()end)
-        showTyping.value = true
-        gMsgHidden = commandBoxChat:action("Send a Global Message", {"globalmessage", "gmsg"}, "", function(click_type)
-            menu.show_command_box($"gmsg "); end, function(input)
-            chat.send_message(input, false, true, true)
-        end)
-        tMsgHidden = commandBoxChat:action("Send a Team Message", {"teammessage", "tmsg"}, "", function(click_type)
-            menu.show_command_box($"tmsg "); end, function(input)
-            chat.send_message(input, true, true, true)
-        end)
-        menu.set_visible(gMsgHidden, false)
-        menu.set_visible(tMsgHidden, false)
+            end, function()
+                disableChatInputAll.value = false
+                disableChatInputTeam.value = false
+            end)
+            showTyping = commandBoxChat:toggle("Show typing", {"showtyping"}, "Should other players see if you are typing?", function()end)
+            showTyping.value = true
+            gMsgHidden = commandBoxChat:action("Send a Global Message", {"globalmessage", "gmsg"}, "", function(click_type)
+                menu.show_command_box($"gmsg "); end, function(input)
+                chat.send_message(input, false, true, true)
+            end)
+            tMsgHidden = commandBoxChat:action("Send a Team Message", {"teammessage", "tmsg"}, "", function(click_type)
+                menu.show_command_box($"tmsg "); end, function(input)
+                chat.send_message(input, true, true, true)
+            end)
+            menu.set_visible(gMsgHidden, false)
+            menu.set_visible(tMsgHidden, false)
     -----kickAll-----
         kickAll:action("Kick All (Love Letter)", {"llkickall"}, "Love Letter kicks everyone. Should only be used when host.", function()
             for _, pid in ipairs(players.list_except(true, false, false, false)) do
