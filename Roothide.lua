@@ -264,12 +264,11 @@ end
             local disableChatInputAll = menu.ref_by_path("Game>Disables>Disable Game Inputs>MP_TEXT_CHAT_ALL")
             local disableChatInputTeam = menu.ref_by_path("Game>Disables>Disable Game Inputs>MP_TEXT_CHAT_TEAM")
             local showTyping
-            commandBoxChat:toggle_loop("Command Box Chat", {""}, "Use the command box to chat. Useful if chat is not opening when pressing 'T'.", function()
+            commandBoxChat:toggle_loop("Command Box Chat.", {""}, "Use the command box to chat. Useful if chat is not opening when pressing 'T'. This option disables the in game chat box to fix crashing issues when co-loading cherax and typing in chat.", function()
                 disableChatInputAll.value = true
                 disableChatInputTeam.value = true
-            
                 if not menu.command_box_is_open() then
-                    if util.is_key_down(0x54) and not (IS_PAUSE_MENU_ACTIVE() or IS_SYSTEM_UI_BEING_DISPLAYED()) then -- Key 'T'
+                    if util.is_key_down(0x54) and not IS_SYSTEM_UI_BEING_DISPLAYED() then -- Key 'T'
                         util.yield()
                         if showTyping.value then
                             for players.list(false) as pid do
@@ -292,7 +291,7 @@ end
                                 end
                             end
                         end
-                    elseif util.is_key_down(0x59) and not (IS_PAUSE_MENU_ACTIVE() or IS_SYSTEM_UI_BEING_DISPLAYED()) then -- Key 'T'
+                    elseif util.is_key_down(0x59) and not IS_SYSTEM_UI_BEING_DISPLAYED() then -- Key 'Y'
                         util.yield()
                         if showTyping.value then
                             for players.list(false) as pid do
