@@ -128,7 +128,7 @@ end
 -----Sᴇʟғ Lɪsᴛ-----
     
     -----weapons-----
-        -----sniperAutoZoom-----
+        -----sniperInstaZoom-----
             local sniper_hashes = {
                 100416529,  -- Sniper Rifle
                 205991906,  -- Heavy Sniper
@@ -142,11 +142,21 @@ end
                 end
                 return false
             end
-            weapons:toggle_loop("Sniper Auto Zoom", {}, "Automatically zooms when scoping in with sniper rifles.", function()
-                local player_ped = players.user_ped()
-                local current_weapon = GET_SELECTED_PED_WEAPON(player_ped)
-                if IS_AIM_CAM_ACTIVE() and is_sniper_weapon(current_weapon) then
-                        SET_CONTROL_VALUE_NEXT_FRAME(2, 42, 1.0)  -- Simulate holding the key to zoom in
+            local zoomOut_pressed_value = false
+            weapons:toggle_loop("Sniper Instant Max Zoom", {}, "Automatically sets your sniper rifle to maximum zoom level when scoping in.", function()
+                if is_sniper_weapon(GET_SELECTED_PED_WEAPON(players.user_ped())) then
+                    if IS_AIM_CAM_ACTIVE() then
+                        if IS_CONTROL_JUST_PRESSED(2, 43) then -- INPUT_SNIPER_ZOOM_OUT_SECONDARY
+                            zoomOut_pressed_value = true
+                        end
+                        if not zoomOut_pressed_value then
+                            SET_FIRST_PERSON_AIM_CAM_ZOOM_FACTOR(6.0)
+                        end
+                    else
+                        zoomOut_pressed_value = false
+                    end
+                else
+                    zoomOut_pressed_value = false
                 end
             end)
     selfList:toggle_loop("True No Ragdoll", {}, "Speeds up getting up after being knocked down.", function()
@@ -529,7 +539,7 @@ end
 -----DebugList-----
 
     if devmode() then
-        local debuglist = menu.list(roothide_menu, "Debug", {}, "")
+        local debuglist = menu.list(roothide_menu, "Debug", {"rhdebug"}, "")
         
         debuglist:action("Restart Script", {}, "Goes through the script stop process, freshly loads the contents of the script file, and starts the main thread again.", function()
             util.restart_script()
