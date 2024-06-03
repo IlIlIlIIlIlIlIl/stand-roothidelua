@@ -65,7 +65,7 @@ end
 util.ensure_package_is_installed("lua/auto-updater")
 local auto_updater = require("auto-updater")
 local auto_update_config = {
-    source_url="https://raw.githubusercontent.com/IlIlIlIIlIlIlIl/roothidelua-stand/main/Roothide.lua",
+    source_url="https://raw.githubusercontent.com/IlIlIlIIlIlIlIl/stand-roothidelua/main/Roothide.lua",
     script_relpath=SCRIPT_RELPATH
 }
 if async_http.have_access() then
@@ -201,6 +201,88 @@ end
             local selectedSeatIndex = seatIndices[index]
             SET_PED_INTO_VEHICLE(GET_PLAYER_PED_SCRIPT_INDEX(players.user()), entities.get_user_vehicle_as_handle(), selectedSeatIndex)
         end)
+    
+    -----vehfly-----
+    --function flyVehicle(speed)
+    --    local player = players.user_ped()
+    --    local vehicle = GET_VEHICLE_PED_IS_IN(player, false)
+    --    if IS_PED_IN_VEHICLE(player, vehicle, false) == false then return end
+    --    if NETWORK_HAS_CONTROL_OF_ENTITY(vehicle) == false then return end
+    --    local rotation = GET_ENTITY_ROTATION(vehicle, 2)
+    --    local currentSpeed = GET_ENTITY_SPEED(vehicle) * 4.2
+    --    local currentSpeedInt = math.floor(currentSpeed)
+    --    -- Key bindings and control checks
+    --    if IS_CONTROL_PRESSED(0, 209) then  -- LEFT SHIFT or L3
+    --        local entitySpeed = GET_ENTITY_SPEED(vehicle)
+    --        local newSpeed = entitySpeed + ((speed * 50) / 100)
+    --        SET_VEHICLE_FORWARD_SPEED(vehicle, math.min(newSpeed, speed * 50))
+    --    end
+    --    if PAD.IS_CONTROL_PRESSED(0, 61) then  -- NUMPAD7
+    --        ENTITY.SET_ENTITY_VELOCITY(vehicle, 0, 0, 50)
+    --    end
+    --    if PAD.IS_CONTROL_PRESSED(0, 76) or PAD.IS_CONTROL_PRESSED(0, 210) then  
+    --        ENTITY.SET_ENTITY_VELOCITY(vehicle, 0, 0, 0)
+    --    end
+    --    
+    --    
+    --    
+    --    
+    --end
+    --vehicleOptions:action("test", {}, "", function()
+    --    flyVehicle()
+    --end)
+    
+    --impulse code
+    --void FlyVehicle(float speed) {
+	--	GetEntityControl()->SimpleRequestControl(GetLocalPlayer().m_vehicle);
+	--	if (KeyDown(VK_NUMPAD9) || PAD::IsControlPressed(0, INPUT_FRONTEND_RT)) {
+	--		float entitySpeed = ENTITY::GetEntitySpeed(GetLocalPlayer().m_vehicle);
+	--		VEHICLE::SetVehicleForwardSpeed(GetLocalPlayer().m_vehicle, entitySpeed + ((speed * 50) / 100) < speed * 50 ? entitySpeed + ((speed * 50) / 100) : entitySpeed);
+	--	}
+	--	if (KeyDown(VK_NUMPAD7))ENTITY::SetEntityVelocity(GetLocalPlayer().m_vehicle, 0, 0, 50);
+	--	if (KeyDown(VK_NUMPAD3) || PAD::IsControlPressed(0, INPUT_FRONTEND_LT))ENTITY::SetEntityVelocity(GetLocalPlayer().m_vehicle, 0, 0, 0);
+	--}
+    
+    --void FlyVehicle() {
+	--	static bool check = false;
+	--	if (!GetLocalPlayer().m_isInVehicle)return;
+	--		Vector3 Rot = ENTITY::GetEntityRotation(GetLocalPlayer().m_vehicle, 2);
+	--		float currentSpeed = ENTITY::GetEntitySpeed(GetLocalPlayer().m_vehicle);
+	--		currentSpeed = currentSpeed * 4.2;
+	--		int currentSpeedInt = (int)currentSpeed;
+	--		if (check) {
+	--			if (currentSpeedInt < 28 && PAD::IsControlPressed(0, INPUT_FRONTEND_RT))
+	--				VEHICLE::SetVehicleGravity(GetLocalPlayer().m_vehicle, true);
+	--			if (currentSpeedInt > 28 || !VEHICLE::IsVehicleOnAllWheels(GetLocalPlayer().m_vehicle)) {
+	--				if (KeyDown(0x57)) {
+	--					VEHICLE::SetVehicleGravity(GetLocalPlayer().m_vehicle, false);
+	--					VEHICLE::SetVehicleForwardSpeed(GetLocalPlayer().m_vehicle, 80);
+	--					ENTITY::FreezeEntityPosition(GetLocalPlayer().m_vehicle, false);
+	--				}
+	--				else {
+	--					if (currentSpeedInt < 15 || KeyDown(VK_SPACE))
+	--						ENTITY::FreezeEntityPosition(GetLocalPlayer().m_vehicle, true);
+	--				}
+	--				if (KeyDown(0x44)) {
+	--					ENTITY::SetEntityRotation(GetLocalPlayer().m_vehicle, Rot.x, 0, Rot.z - 28 + 27.5, 1, 0);
+	--				}
+	--				else if (KeyDown(0x41)) {
+	--					ENTITY::SetEntityRotation(GetLocalPlayer().m_vehicle, Rot.x, 0, Rot.z + 28 - 27.5, 1, 0);
+	--				}
+	--			}
+	--			if (VEHICLE::IsVehicleOnAllWheels(GetLocalPlayer().m_vehicle))
+	--				VEHICLE::SetVehicleGravity(GetLocalPlayer().m_vehicle, true), check = false;
+	--		}
+	--		if (KeyDown(VK_SHIFT) && VEHICLE::IsVehicleOnAllWheels(GetLocalPlayer().m_vehicle)) {
+	--			ENTITY::SetEntityRotation(GetLocalPlayer().m_vehicle, Rot.x + 10, Rot.y, Rot.z, 1, 1);
+	--			VEHICLE::SetVehicleForwardSpeed(GetLocalPlayer().m_vehicle, currentSpeedInt + 10);
+	--			check = true;
+	--		}
+	--}
+    
+    
+    
+    
     vehicleOptions:toggle_loop("Engine Always On", {"alwayson"}, "Keeps the engine and lights running when you exit the vehicle.", function()
         local vehicle = GET_VEHICLE_PED_IS_IN(PLAYER_PED_ID(), false)
         if DOES_ENTITY_EXIST(vehicle) then
