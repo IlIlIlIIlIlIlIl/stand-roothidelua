@@ -102,7 +102,7 @@ end
 -----Mᴇɴᴜ Rᴏᴏᴛ-----
 
     local selfList = menu.list(roothide_menu, "Self", {}, "")
-    local vehicleOptions = menu.list(roothide_menu, "Vehicle Options", {}, "")
+    local vehicleOptions = menu.list(roothide_menu, "Vehicle", {}, "")
     local online = menu.list(roothide_menu, "Online", {}, "")
     local world = menu.list(roothide_menu, "World", {}, "")
     --local game = menu.list(roothide_menu, "Game", {}, "")
@@ -664,6 +664,8 @@ end
 
         player_root:getChildren()[1]:attachBefore(menu.shadow_root():action("Spectate", {}, "Toggles 'Nuts Method' Spectate on the player.", function()
             menu.ref_by_rel_path(menu.player_root(pid), "Spectate>Nuts Method"):trigger()
+            --local nutsSpectate = menu.ref_by_rel_path(menu.player_root(pid), "Spectate>Nuts Method")
+            --if nutsSpectate.value == true then 
         end))
 
         misc_list:action("LoveLetterKick Quick Access Command", {"llk"}, "", function()
