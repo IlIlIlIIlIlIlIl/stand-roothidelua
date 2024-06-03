@@ -116,19 +116,22 @@ end
     end)
 
 -----Cʜɪʟᴅ Lɪsᴛs-----
-
-    local weapons = selfList:list("Weapons", {}, "")
-    local seatSwitcher = vehicleOptions:list("Switch Seat", {"switchseat", "seatswitch"}, "")
-    local protections = online:list("Protections",{"rhprotections"}, "")
-    local traffic = online:list("Traffic", {}, "")
-    local ChatList = online:list("Chat Options", {}, "")
-    local kickAll = online:list("Kick All Options", {}, "")
-    local clearAreaOptions = world:list("Clear Area Options", {}, "")
+    -----Sᴇʟғ Lɪsᴛ-----
+        local weapons = selfList:list("Weapons", {}, "")
+    -----Vᴇʜɪᴄʟᴇ Oᴘᴛɪᴏɴs Lɪsᴛ---​​​​--
+        local seatSwitcher = vehicleOptions:list("Switch Seat", {"switchseat", "seatswitch"}, "")
+    -----Oɴʟɪɴᴇ Lɪsᴛ-----
+        local protections = online:list("Protections",{"rhprotections"}, "")
+        local traffic = online:list("Traffic", {}, "")
+        local ChatList = online:list("Chat Options", {}, "")
+        local kickAll = online:list("Kick All Options", {}, "")
+    -----Wᴏʀʟᴅ Lɪsᴛ​​​​​​​​​-----
+        local clearAreaOptions = world:list("Clear Area Options", {}, "")
 
 -----Sᴇʟғ Lɪsᴛ-----
     
     -----weapons-----
-        -----sniperInstaZoom-----
+        -----sniperZoom-----
             local sniper_hashes = {
                 100416529,  -- Sniper Rifle
                 205991906,  -- Heavy Sniper
@@ -143,14 +146,30 @@ end
                 return false
             end
             local zoomOut_pressed_value = false
-            weapons:toggle_loop("Sniper Instant Max Zoom", {}, "Automatically sets your sniper rifle to maximum zoom level when scoping in.", function()
+            weapons:toggle_loop("Instant Sniper Zoom", {}, "Sets your sniper rifle zoom level to maximum when scoping in.", function()
                 if is_sniper_weapon(GET_SELECTED_PED_WEAPON(players.user_ped())) then
                     if IS_AIM_CAM_ACTIVE() then
                         if IS_CONTROL_JUST_PRESSED(2, 43) then -- INPUT_SNIPER_ZOOM_OUT_SECONDARY
                             zoomOut_pressed_value = true
                         end
                         if not zoomOut_pressed_value then
-                            SET_FIRST_PERSON_AIM_CAM_ZOOM_FACTOR(6.0)
+                            SET_FIRST_PERSON_AIM_CAM_ZOOM_FACTOR(6.0) -- Set the zoom level to maximum
+                        end
+                    else
+                        zoomOut_pressed_value = false
+                    end
+                else
+                    zoomOut_pressed_value = false
+                end
+            end)
+            weapons:toggle_loop("Sniper Auto Zoom", {}, "Automatically zooms in when scoping in with sniper rifles.", function()
+                if is_sniper_weapon(GET_SELECTED_PED_WEAPON(players.user_ped())) then
+                    if IS_AIM_CAM_ACTIVE() then
+                        if IS_CONTROL_JUST_PRESSED(2, 43) then -- INPUT_SNIPER_ZOOM_OUT_SECONDARY
+                            zoomOut_pressed_value = true
+                        end
+                        if not zoomOut_pressed_value then
+                            SET_CONTROL_VALUE_NEXT_FRAME(2, 42, 1.0)  -- Simulate holding the key to zoom in
                         end
                     else
                         zoomOut_pressed_value = false
@@ -540,7 +559,7 @@ end
 
     if devmode() then
         local debuglist = menu.list(roothide_menu, "Debug", {"rhdebug"}, "")
-        
+
         debuglist:action("Restart Script", {}, "Goes through the script stop process, freshly loads the contents of the script file, and starts the main thread again.", function()
             util.restart_script()
         end)
@@ -548,6 +567,10 @@ end
             util.toast(lang.find_builtin("Movement"), TOAST_ABOVE_MAP | TOAST_CONSOLE)
         end)
         
+
+        local libDir = filesystem.scripts_dir() .. "lib\\roothide\\"
+            dofile(libDir .. "support.pluto")
+
     end
 
 --Pʟᴀʏᴇʀ Oᴘᴛɪᴏɴs--
