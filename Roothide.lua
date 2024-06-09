@@ -38,7 +38,7 @@ local scriptStartTime = util.current_time_millis()
     local ANSI_RED = "\x1b[0;31m" -- Rᴇᴅ Cᴏʟᴏᴜʀ Cᴏᴅᴇ
 
 -----𝑓ᴜɴᴄᴛɪᴏɴs​​​​​-----
-    local function devmode()
+    function devmode()
         local developer = {0x0C6E0653, 0x0EE24B30}
         local user = players.get_rockstar_id(players.user())
         for developer as id do
@@ -48,13 +48,12 @@ local scriptStartTime = util.current_time_millis()
         end
         return false
     end
-    local function aboveMapToast(msg, title, subject, notificationColour, dict, dictName) -- ᴄʀᴇᴅɪᴛ ᴛᴏ ᴡɪʀɪsᴄʀɪᴘᴛ
+    function aboveMapToast(msg, title, subject, notificationColour, dict, dictName) -- ᴄʀᴇᴅɪᴛ ᴛᴏ ᴡɪʀɪsᴄʀɪᴘᴛ
         title = title or 'Roothide'
         subject = subject or ''
         dict = dict or 'CHAR_MP_FM_CONTACT'
         dictName = dictName or 'CHAR_MP_FM_CONTACT'
         notificationColour = notificationColour or 2
-
         THEFEED_SET_BACKGROUND_COLOR_FOR_NEXT_POST(notificationColour)
         util.BEGIN_TEXT_COMMAND_THEFEED_POST(msg)
         END_TEXT_COMMAND_THEFEED_POST_MESSAGETEXT(dict, dictName, true, 7, title, subject)
@@ -122,7 +121,7 @@ local scriptStartTime = util.current_time_millis()
         local seatSwitcher = vehicleOptions:list("Switch Seat", {"switchseat", "seatswitch"}, "")
     -----Oɴʟɪɴᴇ Lɪsᴛ-----
         local protections = online:list("Protections",{"rhprotections"}, "")
-        local ChatList = online:list("Chat Options", {}, "")
+        local chatList = online:list("Chat Options", {}, "")
     -----Wᴏʀʟᴅ Lɪsᴛ​​​​​​​​​-----
         local traffic = world:list("Traffic", {}, "")    
         local clearAreaOptions = world:list("Clear Area Options", {}, "")
@@ -243,11 +242,11 @@ local scriptStartTime = util.current_time_millis()
             return menu.ref_by_path("Vehicle>Garage>" .. string.gsub(string.sub(string.sub(path, -((#path) - (#(filesystem.stand_dir() .. [[Vehicles\]])))), 1, -5), "\\", ">"))
         end
         vehicleOptions:action("Random Stand Garage Vehicle", {"randomvehicle", "rv"}, "Picks a random vehicle from your Stand garage.", function()
-                local vehicles_dir = filesystem.stand_dir() .. "Vehicles"
-                local all_vehicles = get_all_vehicles(vehicles_dir)
-                local random_vehicle = all_vehicles[math.random(#all_vehicles)]
-                local stand_ref = vehicle_path_to_stand_ref(random_vehicle)
-                    menu.focus(stand_ref)
+            local vehicles_dir = filesystem.stand_dir() .. "Vehicles"
+            local all_vehicles = get_all_vehicles(vehicles_dir)
+            local random_vehicle = all_vehicles[math.random(#all_vehicles)]
+            local stand_ref = vehicle_path_to_stand_ref(random_vehicle)
+            menu.focus(stand_ref)
         end)
 
 -----Oɴʟɪɴᴇ Lɪsᴛ-----
@@ -261,7 +260,7 @@ local scriptStartTime = util.current_time_millis()
         end)
     -----ᴄʜᴀᴛLɪsᴛ-----
         -----ᴄᴏᴍᴍᴀɴᴅBᴏxCʜᴀᴛ-----
-            local commandBoxChat = ChatList:list("Command Box Chat")
+            local commandBoxChat = chatList:list("Command Box Chat")
             local toggleChatHistory = menu.ref_by_path("Online>Chat>Always Open")
             local disableChatInputAll = menu.ref_by_path("Game>Disables>Disable Game Inputs>MP_TEXT_CHAT_ALL")
             local disableChatInputTeam = menu.ref_by_path("Game>Disables>Disable Game Inputs>MP_TEXT_CHAT_TEAM")
@@ -345,7 +344,7 @@ local scriptStartTime = util.current_time_millis()
                 end
             end
             chat.on_message(onChatMessage)
-            ChatList:toggle("Log Chat To Console With Coloured Text", {}, "Restart script if chat is not coloured.", function(on)
+            chatList:toggle("Log Chat To Console With Coloured Text", {}, "Restart script if chat is not coloured.", function(on)
                 logChatEnabled = on
             end)
     local showspeakerson = online:toggle_loop("Show speakers", {"showspeakers"}, "Accurately shows who is talking in voice chat as soon as it happens. Better than vanilla. The speakers name will be shown in stands info overlay for easy visibility.", function()
@@ -562,18 +561,34 @@ local scriptStartTime = util.current_time_millis()
 
     end
 
------Shadow Root-----
+-----Sʜᴀᴅᴏᴡ Rᴏᴏᴛ-----
     -----ᴋɪᴄᴋAʟʟ-----
         local kickAll = menu.ref_by_path("Players>All Players"):getChildren()[1]:attachBefore(menu.shadow_root():list("Kick", {}, ""))
-        kickAll:action("Kick All (Love Letter)", {"llkickall"}, "Love Letter kicks everyone. Should only be used when host.", function()
+        kickAll:action("Kick All", {"kickall"}, "Removes everyone that it can.", function()
             for _, pid in ipairs(players.list_except(true, false, false, false)) do
-                menu.ref_by_rel_path(menu.player_root(pid), "Kick>Love Letter"):trigger()
+                if players.get_host() == players.user() then
+                    menu.ref_by_rel_path(menu.player_root(pid), "Kick>Love Letter"):trigger()
+                    util.yield(200)
+                elseif !players.is_marked_as_modder(pid) then
+                    menu.ref_by_rel_path(menu.player_root(pid), "Kick>Smart"):trigger()
+                    util.yield(100)
+                elseif players.is_marked_as_modder(pid) then
+                    menu.ref_by_rel_path(menu.player_root(pid), "Kick>Love Letter"):trigger()
+                    util.yield(100)
+                end
             end
         end)
-        kickAll:action("Kick All (Smart Kick)", {"kickall"}, "Removes everyone that it can, excluding friends and modders.", function()
+        kickAll:action("Kick All Strangers", {}, "Removes all players not added as a friend.", function()
             for _, pid in ipairs(players.list_except(true, true, false, false)) do
-                if !players.is_marked_as_modder(pid) then
+                if players.get_host() == players.user() then
+                    menu.ref_by_rel_path(menu.player_root(pid), "Kick>Love Letter"):trigger()
+                    util.yield(200)
+                elseif !players.is_marked_as_modder(pid) then
                     menu.ref_by_rel_path(menu.player_root(pid), "Kick>Smart"):trigger()
+                    util.yield(100)
+                elseif players.is_marked_as_modder(pid) then
+                    menu.ref_by_rel_path(menu.player_root(pid), "Kick>Love Letter"):trigger()
+                    util.yield(100)
                 end
             end
         end)
@@ -593,7 +608,7 @@ local scriptStartTime = util.current_time_millis()
 
 
         crashes_root:getChildren()[4]:attachAfter(menu.shadow_root():action("ScriptEvent Crash", {}, "Funny scriptevent", function()
-            if pid == players.user() then return notification.notify(scriptname, lang.get_localised(-1974706693)) end
+            if pid == players.user() then return util.toast(lang.get_localised(-1974706693)) end
             menu.ref_by_rel_path(menu.player_root(pid), "Friendly>Give Script Host"):trigger()
             util.yield(1000)
             if players.get_script_host() ~= pid then return end
@@ -602,7 +617,7 @@ local scriptStartTime = util.current_time_millis()
             util.trigger_script_event(1 << pid, {-1604421397, players.user(), 2, 0, 0, 0, 0, 0})
         end))
         crashes_root:getChildren()[5]:attachAfter(menu.shadow_root():action("ScriptEvent v2 Crash", {"se2", "sc2", "script2"}, "Funny Scriptevent v2", function()
-            if pid == players.user() then return notification.notify(scriptname, lang.get_localised(-1974706693)) end
+            if pid == players.user() then return util.toast(lang.get_localised(-1974706693)) end
             menu.ref_by_rel_path(menu.player_root(pid), "Friendly>Give Script Host"):trigger()
             util.yield(1000)
             if players.get_script_host() ~= pid then return end
