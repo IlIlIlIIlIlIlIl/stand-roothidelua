@@ -26,9 +26,9 @@ local scriptStartTime = util.current_time_millis()
     $define INVALID_HANDLE_VALUE = -1
     $define ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x4
     local hSTDOUT = kernel32:call("GetStdHandle", STD_OUTPUT_HANDLE)
-    if hSTDOUT ~= INVALID_HANDLE_VALUE then
+    if hSTDOUT != INVALID_HANDLE_VALUE then
         local mode = memory.alloc_int()
-        if kernel32:call("GetConsoleMode", hSTDOUT, mode) ~= 0 then
+        if kernel32:call("GetConsoleMode", hSTDOUT, mode) != 0 then
             kernel32:call("SetConsoleMode", hSTDOUT, memory.read_int(mode) | ENABLE_VIRTUAL_TERMINAL_PROCESSING)
         end
     end
@@ -209,8 +209,8 @@ local scriptStartTime = util.current_time_millis()
     local last_vehicle_with_radio_off = 0
     vehicleOptions:toggle_loop("Turn Radio Off Automatically", {}, "Turns off the radio each time you get in a vehicle.", function()
         local current_vehicle = GET_VEHICLE_PED_IS_IN(PLAYER_PED_ID(), false)
-        if current_vehicle ~= 0 then
-            if last_vehicle_with_radio_off ~= current_vehicle and GET_IS_VEHICLE_ENGINE_RUNNING(current_vehicle) then
+        if current_vehicle != 0 then
+            if last_vehicle_with_radio_off != current_vehicle and GET_IS_VEHICLE_ENGINE_RUNNING(current_vehicle) then
                 if IS_VEHICLE_RADIO_ON(current_vehicle) then
                     util.yield(850)
                     SET_RADIO_TO_STATION_NAME("OFF")
@@ -269,7 +269,7 @@ local scriptStartTime = util.current_time_millis()
                 disableChatInputAll.value = true
                 disableChatInputTeam.value = true
                 if !menu.command_box_is_open() then
-                    if util.is_key_down(0x54) and not IS_SYSTEM_UI_BEING_DISPLAYED() then -- Kᴇʏ 'T'
+                    if util.is_key_down(0x54) and !IS_SYSTEM_UI_BEING_DISPLAYED() then -- Kᴇʏ 'T'
                         util.yield()
                         if showTyping.value then
                             for players.list(false) as pid do
@@ -292,7 +292,7 @@ local scriptStartTime = util.current_time_millis()
                                 end
                             end
                         end
-                    elseif util.is_key_down(0x59) and not IS_SYSTEM_UI_BEING_DISPLAYED() then -- Kᴇʏ 'Y'
+                    elseif util.is_key_down(0x59) and !IS_SYSTEM_UI_BEING_DISPLAYED() then -- Kᴇʏ 'Y'
                         util.yield()
                         if showTyping.value then
                             for players.list(false) as pid do
@@ -394,7 +394,7 @@ local scriptStartTime = util.current_time_millis()
         local aggressiveScriptHostActive = false
         local function aggressiveScriptHost()
             while AggressiveScriptHostActive do
-                if players.get_script_host() ~= players.user() then
+                if players.get_script_host() != players.user() then
                     local playerName = players.get_name(players.user())
                     menu.trigger_commands("givesh" .. playerName)
                     util.toast("Becoming script host...")
@@ -443,7 +443,7 @@ local scriptStartTime = util.current_time_millis()
             switch index do
                 case 1:
                     for entities.get_all_peds_as_handles() as ped do
-                        if ped ~= players.user_ped() and not IS_PED_A_PLAYER(ped) then
+                        if ped != players.user_ped() and !IS_PED_A_PLAYER(ped) then
                             entities.delete_by_handle(ped)
                             counter += 1
                             util.yield()
@@ -453,7 +453,7 @@ local scriptStartTime = util.current_time_millis()
                 case 2:
                     for entities.get_all_vehicles_as_handles() as vehicle do    
 	    			local owner = entities.get_owner(vehicle)
-                        if vehicle ~= GET_VEHICLE_PED_IS_IN(players.user_ped(), false) and DECOR_GET_INT(vehicle, "Player_Vehicle") == 0 and (owner == players.user() or owner == -1) then
+                        if vehicle != GET_VEHICLE_PED_IS_IN(players.user_ped(), false) and DECOR_GET_INT(vehicle, "Player_Vehicle") == 0 and (owner == players.user() or owner == -1) then
                             entities.delete_by_handle(vehicle)
                             counter += 1
                         end
@@ -566,13 +566,12 @@ local scriptStartTime = util.current_time_millis()
         local kickAll = menu.ref_by_path("Players>All Players"):getChildren()[1]:attachBefore(menu.shadow_root():list("Kick", {}, ""))
         kickAll:action("Kick All", {"kickall"}, "Removes everyone that it can.", function()
             local hostPlayerID = players.get_host() -- Get the Player ID of the session host
-            local isUserHost = hostPlayerID == players.user() -- Check if the user is the session host
             for _, pid in ipairs(players.list_except(true, false, false, false)) do -- Loop through all players except the user
-                if isUserHost then -- If the user is the session host
+                if hostPlayerID == players.user() then -- If the user is the session host
                     menu.ref_by_rel_path(menu.player_root(pid), "Kick>Love Letter"):trigger() -- Kick the player using the "Love Letter" method
                 else -- If the user is not the session host
-                    if hostPlayerID ~= pid then -- If the player is not the host
-                        if !players.is_marked_as_modder(pid) then -- 
+                    if hostPlayerID != pid then -- If the player is not the host
+                        if !players.is_marked_as_modder(pid) then
                             menu.ref_by_rel_path(menu.player_root(pid), "Kick>Smart"):trigger() -- If the player is not marked as a modder, kick using the "Smart" method
                         else
                             menu.ref_by_rel_path(menu.player_root(pid), "Kick>Love Letter"):trigger() -- If the player is marked as a modder, kick using the "Love Letter" method
@@ -588,13 +587,12 @@ local scriptStartTime = util.current_time_millis()
         end)
         kickAll:action("Kick All Strangers", {}, "Removes all players not added as a friend.", function()
             local hostPlayerID = players.get_host() -- Get the Player ID of the session host
-            local isUserHost = hostPlayerID == players.user() -- Check if the user is the session host
             for _, pid in ipairs(players.list_except(true, true, false, false)) do -- Loop through all players except the user and friends
-                if isUserHost then -- If the user is the session host
+                if hostPlayerID == players.user() then -- If the user is the session host
                     menu.ref_by_rel_path(menu.player_root(pid), "Kick>Love Letter"):trigger() -- Kick the player using the "Love Letter" method
                 else -- If the user is not the session host
-                    if hostPlayerID ~= pid then -- If the player is not the host
-                        if !players.is_marked_as_modder(pid) then -- 
+                    if hostPlayerID != pid then -- If the player is not the host
+                        if !players.is_marked_as_modder(pid) then
                             menu.ref_by_rel_path(menu.player_root(pid), "Kick>Smart"):trigger() -- If the player is not marked as a modder, kick using the "Smart" method
                         else
                             menu.ref_by_rel_path(menu.player_root(pid), "Kick>Love Letter"):trigger() -- If the player is marked as a modder, kick using the "Love Letter" method
@@ -626,7 +624,7 @@ local scriptStartTime = util.current_time_millis()
             if pid == players.user() then return util.toast(lang.get_localised(-1974706693)) end
             menu.ref_by_rel_path(menu.player_root(pid), "Friendly>Give Script Host"):trigger()
             util.yield(1000)
-            if players.get_script_host() ~= pid then return end
+            if players.get_script_host() != pid then return end
             util.trigger_script_event(1 << pid, {323285304, players.user(), 2147483647, 0, 0, 0, 2147483647, -1008861746})
             util.yield(250)
             util.trigger_script_event(1 << pid, {-1604421397, players.user(), 2, 0, 0, 0, 0, 0})
@@ -635,7 +633,7 @@ local scriptStartTime = util.current_time_millis()
             if pid == players.user() then return util.toast(lang.get_localised(-1974706693)) end
             menu.ref_by_rel_path(menu.player_root(pid), "Friendly>Give Script Host"):trigger()
             util.yield(1000)
-            if players.get_script_host() ~= pid then return end
+            if players.get_script_host() != pid then return end
             util.trigger_script_event(1 << pid, {323285304, players.user(), -4640169, 0, 0, 0, -36565476, -53105203})
             util.yield(250)
             util.trigger_script_event(1 << pid, {323285304, players.user(), 2147483647, 0, 0, 0, 2147483647, -1008861746})
