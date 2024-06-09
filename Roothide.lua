@@ -565,34 +565,49 @@ local scriptStartTime = util.current_time_millis()
     -----ᴋɪᴄᴋAʟʟ-----
         local kickAll = menu.ref_by_path("Players>All Players"):getChildren()[1]:attachBefore(menu.shadow_root():list("Kick", {}, ""))
         kickAll:action("Kick All", {"kickall"}, "Removes everyone that it can.", function()
-            for _, pid in ipairs(players.list_except(true, false, false, false)) do
-                if players.get_host() == players.user() then
-                    menu.ref_by_rel_path(menu.player_root(pid), "Kick>Love Letter"):trigger()
-                    util.yield(200)
-                elseif !players.is_marked_as_modder(pid) then
-                    menu.ref_by_rel_path(menu.player_root(pid), "Kick>Smart"):trigger()
-                    util.yield(100)
-                elseif players.is_marked_as_modder(pid) then
-                    menu.ref_by_rel_path(menu.player_root(pid), "Kick>Love Letter"):trigger()
-                    util.yield(100)
+            local hostPlayerID = players.get_host() -- Get the Player ID of the session host
+            local isUserHost = hostPlayerID == players.user() -- Check if the user is the session host
+            for _, pid in ipairs(players.list_except(true, false, false, false)) do -- Loop through all players except the user
+                if isUserHost then -- If the user is the session host
+                    menu.ref_by_rel_path(menu.player_root(pid), "Kick>Love Letter"):trigger() -- Kick the player using the "Love Letter" method
+                else -- If the user is not the session host
+                    if hostPlayerID ~= pid then -- If the player is not the host
+                        if !players.is_marked_as_modder(pid) then -- 
+                            menu.ref_by_rel_path(menu.player_root(pid), "Kick>Smart"):trigger() -- If the player is not marked as a modder, kick using the "Smart" method
+                        else
+                            menu.ref_by_rel_path(menu.player_root(pid), "Kick>Love Letter"):trigger() -- If the player is marked as a modder, kick using the "Love Letter" method
+                        end
+                    else -- If the player is the host
+                        if !players.is_marked_as_modder(pid) then -- If the host is not marked as a modder
+                            menu.ref_by_rel_path(menu.player_root(pid), "Kick>Smart"):trigger() -- Kick the host using the "Smart" method
+                        end
+                    end
                 end
+                util.yield(100) -- Wait for 100 milliseconds between each kick action
             end
         end)
         kickAll:action("Kick All Strangers", {}, "Removes all players not added as a friend.", function()
-            for _, pid in ipairs(players.list_except(true, true, false, false)) do
-                if players.get_host() == players.user() then
-                    menu.ref_by_rel_path(menu.player_root(pid), "Kick>Love Letter"):trigger()
-                    util.yield(200)
-                elseif !players.is_marked_as_modder(pid) then
-                    menu.ref_by_rel_path(menu.player_root(pid), "Kick>Smart"):trigger()
-                    util.yield(100)
-                elseif players.is_marked_as_modder(pid) then
-                    menu.ref_by_rel_path(menu.player_root(pid), "Kick>Love Letter"):trigger()
-                    util.yield(100)
+            local hostPlayerID = players.get_host() -- Get the Player ID of the session host
+            local isUserHost = hostPlayerID == players.user() -- Check if the user is the session host
+            for _, pid in ipairs(players.list_except(true, true, false, false)) do -- Loop through all players except the user and friends
+                if isUserHost then -- If the user is the session host
+                    menu.ref_by_rel_path(menu.player_root(pid), "Kick>Love Letter"):trigger() -- Kick the player using the "Love Letter" method
+                else -- If the user is not the session host
+                    if hostPlayerID ~= pid then -- If the player is not the host
+                        if !players.is_marked_as_modder(pid) then -- 
+                            menu.ref_by_rel_path(menu.player_root(pid), "Kick>Smart"):trigger() -- If the player is not marked as a modder, kick using the "Smart" method
+                        else
+                            menu.ref_by_rel_path(menu.player_root(pid), "Kick>Love Letter"):trigger() -- If the player is marked as a modder, kick using the "Love Letter" method
+                        end
+                    else -- If the player is the host
+                        if !players.is_marked_as_modder(pid) then -- If the host is not marked as a modder
+                            menu.ref_by_rel_path(menu.player_root(pid), "Kick>Smart"):trigger() -- Kick the host using the "Smart" method
+                        end
+                    end
                 end
+                util.yield(100) -- Wait for 100 milliseconds between each kick action
             end
         end)
-
 
 -----Pʟᴀʏᴇʀ Oᴘᴛɪᴏɴs-----
 
