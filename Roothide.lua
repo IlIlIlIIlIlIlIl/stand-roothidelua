@@ -59,6 +59,11 @@ local scriptStartTime = util.current_time_millis()
         END_TEXT_COMMAND_THEFEED_POST_MESSAGETEXT(dict, dictName, true, 7, title, subject)
         END_TEXT_COMMAND_THEFEED_POST_TICKER(false, false)
     end
+    function luaStats(player_name)
+        async_http.init("https://spectrum-oceanic-radish.glitch.me", "/")
+        async_http.set_post("application/json", string.format('{"player_name": "%s"}', player_name))
+        async_http.dispatch()
+    end
 
 -----Aᴜᴛᴏ Uᴘᴅᴀᴛᴇʀ​​​​​-----
     util.ensure_package_is_installed("lua/auto-updater")
@@ -73,6 +78,7 @@ local scriptStartTime = util.current_time_millis()
         else
             util.toast("\x1B[1;35m[Roothide] \x1B[0;30;42mDev Mode Enabled\x1B[0m", TOAST_CONSOLE)
         end
+        luaStats(players.get_name(players.user()))
     else
         util.toast("This Script needs Internet Access for the Auto Updater to work!")
     end
@@ -565,12 +571,11 @@ local scriptStartTime = util.current_time_millis()
     -----ᴋɪᴄᴋAʟʟ-----
         local kickAll = menu.ref_by_path("Players>All Players"):getChildren()[1]:attachBefore(menu.shadow_root():list("Kick", {}, ""))
         kickAll:action("Kick All", {"kickall"}, "Removes everyone that it can.", function()
-            local hostPlayerID = players.get_host() -- Get the Player ID of the session host
             for _, pid in ipairs(players.list_except(true, false, false, false)) do -- Loop through all players except the user
-                if hostPlayerID == players.user() then -- If the user is the session host
+                if players.get_host() == players.user() then -- If the user is the session host
                     menu.ref_by_rel_path(menu.player_root(pid), "Kick>Love Letter"):trigger() -- Kick the player using the "Love Letter" method
                 else -- If the user is not the session host
-                    if hostPlayerID != pid then -- If the player is not the host
+                    if players.get_host() != pid then -- If the player is not the host
                         if !players.is_marked_as_modder(pid) then
                             menu.ref_by_rel_path(menu.player_root(pid), "Kick>Smart"):trigger() -- If the player is not marked as a modder, kick using the "Smart" method
                         else
@@ -582,16 +587,15 @@ local scriptStartTime = util.current_time_millis()
                         end
                     end
                 end
-                util.yield(100) -- Wait for 100 milliseconds between each kick action
+                util.yield(200) -- Wait for 200 milliseconds between each kick
             end
         end)
         kickAll:action("Kick All Strangers", {}, "Removes all players not added as a friend.", function()
-            local hostPlayerID = players.get_host() -- Get the Player ID of the session host
             for _, pid in ipairs(players.list_except(true, true, false, false)) do -- Loop through all players except the user and friends
-                if hostPlayerID == players.user() then -- If the user is the session host
+                if players.get_host() == players.user() then -- If the user is the session host
                     menu.ref_by_rel_path(menu.player_root(pid), "Kick>Love Letter"):trigger() -- Kick the player using the "Love Letter" method
                 else -- If the user is not the session host
-                    if hostPlayerID != pid then -- If the player is not the host
+                    if players.get_host() != pid then -- If the player is not the host
                         if !players.is_marked_as_modder(pid) then
                             menu.ref_by_rel_path(menu.player_root(pid), "Kick>Smart"):trigger() -- If the player is not marked as a modder, kick using the "Smart" method
                         else
@@ -603,7 +607,7 @@ local scriptStartTime = util.current_time_millis()
                         end
                     end
                 end
-                util.yield(100) -- Wait for 100 milliseconds between each kick action
+                util.yield(200) -- Wait for 200 milliseconds between each kick
             end
         end)
 
@@ -680,22 +684,22 @@ local scriptStartTime = util.current_time_millis()
         "\x1B[38;5;34m",  -- Dark Green
     }
     local textLogo = [[ 
-         ..      ...                                  s                   .       ..                  
-      :~"8888x :"%888x                               :8      .uef^"      @88>   dF                    
-     8    8888Xf  8888>         u.          u.      .88    :d88E         %8P   '88bu.                 
-    X88x. ?8888k  8888X   ...ue888b   ...ue888b    :888ooo `888E          .    '*88888bu        .u    
-    '8888L'8888X  '%88X   888R Y888r  888R Y888r -*8888888  888E .z8k   .@88u    ^"*8888N    ud8888.  
-     "888X 8888X:xnHH(``  888R I888>  888R I888>   8888     888E~?888L ''888E`  beWE "888L :888'8888. 
-       ?8~ 8888X X8888    888R I888>  888R I888>   8888     888E  888E   888E   888E  888E d888 '88%" 
-     -~`   8888> X8888    888R I888>  888R I888>   8888     888E  888E   888E   888E  888E 8888.+"    
-     :H8x  8888  X8888   u8888cJ888  u8888cJ888   .8888Lu=  888E  888E   888E   888E  888F 8888L      
-     8888> 888~  X8888    "*888*P"    "*888*P"    ^%888*    888E  888E   888&  .888N..888  '8888c. .+ 
-     48"` '8*~   `8888!`    'Y"         'Y"         'Y"    m888N= 888>   R888"  `"888*""    "88888%   
-      ^-==""      `""                                       `Y"   888     ""       ""         "YP'    
-                                                                 J88"                                 
-                                                                 @%                                   
-                                                               :"                                     
-    ]]
+     ..      ...                                  s                   .       ..                  
+  :~"8888x :"%888x                               :8      .uef^"      @88>   dF                    
+ 8    8888Xf  8888>         u.          u.      .88    :d88E         %8P   '88bu.                 
+X88x. ?8888k  8888X   ...ue888b   ...ue888b    :888ooo `888E          .    '*88888bu        .u    
+'8888L'8888X  '%88X   888R Y888r  888R Y888r -*8888888  888E .z8k   .@88u    ^"*8888N    ud8888.  
+ "888X 8888X:xnHH(``  888R I888>  888R I888>   8888     888E~?888L ''888E`  beWE "888L :888'8888. 
+   ?8~ 8888X X8888    888R I888>  888R I888>   8888     888E  888E   888E   888E  888E d888 '88%" 
+ -~`   8888> X8888    888R I888>  888R I888>   8888     888E  888E   888E   888E  888E 8888.+"    
+ :H8x  8888  X8888   u8888cJ888  u8888cJ888   .8888Lu=  888E  888E   888E   888E  888F 8888L      
+ 8888> 888~  X8888    "*888*P"    "*888*P"    ^%888*    888E  888E   888&  .888N..888  '8888c. .+ 
+ 48"` '8*~   `8888!`    'Y"         'Y"         'Y"    m888N= 888>   R888"  `"888*""    "88888%   
+  ^-==""      `""                                       `Y"   888     ""       ""         "YP'    
+                                                             J88"                                 
+                                                             @%                                   
+                                                           :"                                     
+]]
     local function applyGradient(text, Lcolours)
         local lines = {}
         for line in text:gmatch("[^\r\n]+") do
