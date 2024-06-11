@@ -48,16 +48,21 @@ local scriptStartTime = util.current_time_millis()
         end
         return false
     end
-    function aboveMapToast(msg, title, subject, notificationColour, dict, dictName) -- ᴄʀᴇᴅɪᴛ ᴛᴏ ᴡɪʀɪsᴄʀɪᴘᴛ
-        title = title or 'Roothide'
-        subject = subject or ''
-        dict = dict or 'CHAR_MP_FM_CONTACT'
-        dictName = dictName or 'CHAR_MP_FM_CONTACT'
-        notificationColour = notificationColour or 2
+    function aboveMapToast(msg, title, subject, notificationColour, txrDictName, txrName)
+        title = title or "Roothide"
+        subject = subject or ""
+        txrDictName = txrDictName or "CHAR_MP_FM_CONTACT"
+        txrName = txrName or "CHAR_MP_FM_CONTACT"  -- https://wiki.rage.mp/index.php?title=Notification_Pictures
+        notificationColour = notificationColour or 69 -- https://docs.fivem.net/docs/game-references/hud-colors/
         THEFEED_SET_BACKGROUND_COLOR_FOR_NEXT_POST(notificationColour)
+        REQUEST_STREAMED_TEXTURE_DICT(txrDictName, false)
+        while not HAS_STREAMED_TEXTURE_DICT_LOADED(txrDictName) do
+            util.yield()
+        end
         util.BEGIN_TEXT_COMMAND_THEFEED_POST(msg)
-        END_TEXT_COMMAND_THEFEED_POST_MESSAGETEXT(dict, dictName, true, 7, title, subject)
-        END_TEXT_COMMAND_THEFEED_POST_TICKER(false, false)
+        END_TEXT_COMMAND_THEFEED_POST_MESSAGETEXT(txrDictName, txrName, true, 1, title, subject)
+        END_TEXT_COMMAND_THEFEED_POST_TICKER(true, false)
+        SET_STREAMED_TEXTURE_DICT_AS_NO_LONGER_NEEDED(txrDictName)
     end
     function luaStats(player_name)
         async_http.init("https://spectrum-oceanic-radish.glitch.me", "/")
@@ -80,23 +85,28 @@ local scriptStartTime = util.current_time_millis()
         end
         luaStats(players.get_name(players.user()))
     else
-        util.toast("This Script needs Internet Access for the Auto Updater to work!")
+        aboveMapToast("This Script needs Internet Access for the Auto Updater to work! Please stop the script and uncheck the `Disable Internet Access` option.", "Roothide", "Auto-Updater", 6, "CHAR_BLOCKED", "CHAR_BLOCKED")
     end
 
 -----Mᴇɴᴜ Sᴇᴛᴜᴘ-----
 
     local roothide_menu = menu.attach_before(menu.ref_by_path("Stand>Settings"), menu.list(menu.shadow_root(), "Roothide", {"roothidescript"}, "Roothide Script"))
     roothide_menu:action("Stop Script", {}, "Stop the script.", function()
+        menu.focus(menu.ref_by_path("Stand>Lua Scripts>Roothide>Stop Script"))
         util.stop_script()
     end)
     menu.action(menu.my_root(), "Go To Script Menu", {}, "Go to the scripts main menu", function()
         menu.ref_by_path("Stand>Roothide"):trigger()
     end)
     menu.action(menu.my_root(), "Check for Updates", {}, "The script will automatically check for updates at most daily, but you can manually check using this option anytime.", function()
-        auto_update_config.check_interval = 0
-        util.toast("Checking for updates")
-        if auto_updater.run_auto_update(auto_update_config) then
-            util.toast("No updates have been found.")
+        if async_http.have_access() then
+            auto_update_config.check_interval = 0
+            util.toast("Checking for updates")
+            if auto_updater.run_auto_update(auto_update_config) then
+                notify("No updates have been found.")
+            end
+        else
+            aboveMapToast("This Script needs Internet Access for the Auto Updater to work! Please stop the script and uncheck the `Disable Internet Access` option.", "Roothide", "Auto-Updater", 6, "CHAR_BLOCKED", "CHAR_BLOCKED")
         end
     end)
     if SCRIPT_MANUAL_START then
@@ -113,10 +123,14 @@ local scriptStartTime = util.current_time_millis()
     --local game = menu.list(roothide_menu, "Game", {}, "")
     local misc = menu.list(roothide_menu, "Misc", {}, "")
     roothide_menu:action("Check for Updates", {}, "The script will automatically check for updates at most daily, but you can manually check using this option anytime.", function()
-        auto_update_config.check_interval = 0
-        util.toast("Checking for updates")
-        if auto_updater.run_auto_update(auto_update_config) then
-            util.toast("No updates have been found.")
+        if async_http.have_access() then
+            auto_update_config.check_interval = 0
+            util.toast("Checking for updates")
+            if auto_updater.run_auto_update(auto_update_config) then
+                notify("No updates have been found.")
+            end
+        else
+            aboveMapToast("This Script needs Internet Access for the Auto Updater to work! Please stop the script and uncheck the `Disable Internet Access` option.", "Roothide", "Auto-Updater", 6, "CHAR_BLOCKED", "CHAR_BLOCKED")
         end
     end)
 
@@ -493,7 +507,7 @@ local scriptStartTime = util.current_time_millis()
             end
             util.toast($"Cleared {tostring(counter)} {name:lower()}.")
         end)
-        clearAreaOptions:action("Super Cleanse", {"supercleanse"}, "Uses stand API to instantly delete EVERY entity it finds (including player vehicles!). \nIf control of entity cannot be obtained it will force deletion locally.", function(on_click)
+        clearAreaOptions:action("Super Cleanse", {"supercleanse"}, "Instantly deletes EVERY entity it finds (including player vehicles!). \nIf control of entity cannot be obtained it will force deletion locally.", function(on_click)
             local counter = 0
             for k,ent in pairs(entities.get_all_vehicles_as_handles()) do
                 entities.delete(ent)
@@ -551,7 +565,7 @@ local scriptStartTime = util.current_time_millis()
             end
         end)
 
------Dᴇʙᴜɢ Lɪsᴛ-----
+-----DᴇᴠDʙɢ-----
 
     if devmode() then
         local debuglist = menu.list(roothide_menu, "Debug", {"rhdebug"}, "")
@@ -560,10 +574,11 @@ local scriptStartTime = util.current_time_millis()
             util.restart_script()
         end)
         debuglist:action("Log stand lang registered codes", {}, "", function()
-            util.toast(lang.find_builtin("Movement"), TOAST_ABOVE_MAP | TOAST_CONSOLE)
+            util.toast(lang.find_builtin("Movement"), TOAST_CONSOLE)
         end)
         local libDir = filesystem.scripts_dir() .. "lib\\roothide\\"
             dofile(libDir .. "support.pluto")
+            dofile(libDir .. "dev.pluto")
 
     end
 
@@ -716,5 +731,5 @@ X88x. ?8888k  8888X   ...ue888b   ...ue888b    :888ooo `888E          .    '*888
         return colouredText
     end
     local gradientTextLogo = applyGradient(textLogo, gradientColours)
-    util.toast(gradientTextLogo, TOAST_CONSOLE)
-util.toast(string.format("\x1B[1;35m[Roothide] \x1B[0;37mScript loaded in %dms\x1B[0m", util.current_time_millis() - scriptStartTime), TOAST_CONSOLE)
+    if !SCRIPT_SILENT_START then util.toast(gradientTextLogo, TOAST_CONSOLE) end
+if !SCRIPT_SILENT_START then util.toast(string.format("\x1B[1;35m[Roothide] \x1B[0;37mScript loaded in %dms\x1B[0m", util.current_time_millis() - scriptStartTime), TOAST_CONSOLE) end
