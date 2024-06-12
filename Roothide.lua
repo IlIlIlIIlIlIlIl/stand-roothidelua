@@ -92,7 +92,7 @@ local scriptStartTime = util.current_time_millis()
 
     local roothide_menu = menu.attach_before(menu.ref_by_path("Stand>Settings"), menu.list(menu.shadow_root(), "Roothide", {"roothidescript"}, "Roothide Script"))
     roothide_menu:action("Stop Script", {}, "Stop the script.", function()
-        menu.focus(menu.ref_by_path("Stand>Lua Scripts>Roothide>Stop Script"))
+        menu.focus(menu.ref_by_path("Stand>Lua Scripts>" .. SCRIPT_NAME .. ">Stop Script"))
         util.stop_script()
     end)
     menu.action(menu.my_root(), "Go To Script Menu", {}, "Go to the scripts main menu", function()
