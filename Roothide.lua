@@ -25,17 +25,26 @@ local scriptStartTime = util.current_time_millis()
     $define STD_OUTPUT_HANDLE = -11
     $define INVALID_HANDLE_VALUE = -1
     $define ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x4
-    local hSTDOUT = kernel32:call("GetStdHandle", STD_OUTPUT_HANDLE)
-    if hSTDOUT != INVALID_HANDLE_VALUE then
-        local mode = memory.alloc_int()
-        if kernel32:call("GetConsoleMode", hSTDOUT, mode) != 0 then
-            kernel32:call("SetConsoleMode", hSTDOUT, memory.read_int(mode) | ENABLE_VIRTUAL_TERMINAL_PROCESSING)
+    function colourConsole()
+        local hSTDOUT = kernel32:call("GetStdHandle", STD_OUTPUT_HANDLE)
+        if hSTDOUT != INVALID_HANDLE_VALUE then
+            local mode = memory.alloc_int()
+            if kernel32:call("GetConsoleMode", hSTDOUT, mode) != 0 then
+                kernel32:call("SetConsoleMode", hSTDOUT, memory.read_int(mode) | ENABLE_VIRTUAL_TERMINAL_PROCESSING)
+            end
         end
     end
-    local ANSI_RESET = "\x1b[0m" -- Rᴇsᴇᴛ ᴛᴏ ᴅᴇғᴀᴜʟᴛ ᴄᴏʟᴏᴜʀ
-    local ANSI_YELLOW = "\x1b[0;33m" -- Yᴇʟʟᴏᴡ Cᴏʟᴏᴜʀ Cᴏᴅᴇ
-    local ANSI_GREEN = "\x1b[1;32m" -- Gʀᴇᴇɴ Cᴏʟᴏᴜʀ Cᴏᴅᴇ
-    local ANSI_RED = "\x1b[0;31m" -- Rᴇᴅ Cᴏʟᴏᴜʀ Cᴏᴅᴇ
+    colourConsole()
+    -----Cᴏʟᴏᴜʀ Cᴏᴅᴇs----- https://talyian.github.io/ansicolors/    https://bixense.com/clicolors/
+        local ANSI = {RED="\27[38;5;196m",DARK_RED="\27[38;5;160m",DARK_ORANGE="\27[38;5;202m",
+        ORANGE="\27[38;5;208m",LIGHT_ORANGE="\27[38;5;214m",GOLD="\27[38;5;220m",YELLOW="\27[38;5;226m",
+        LIGHT_YELLOW="\27[38;5;154m",LIGHT_GREEN="\27[38;5;82m",GREEN="\27[38;5;46m",DARK_GREEN="\27[38;5;34m",
+        LIGHT_BLUE="\27[38;5;45m",BLUE="\27[38;5;21m",DARK_BLUE="\27[38;5;19m",LIGHT_CYAN="\27[38;5;87m",
+        CYAN="\27[38;5;51m",DARK_CYAN="\27[38;5;30m",LIGHT_PURPLE="\27[38;5;177m",PURPLE="\27[38;5;93m",
+        DARK_PURPLE="\27[38;5;55m",LIGHT_MAGENTA="\27[38;5;213m",MAGENTA="\27[38;5;201m",DARK_MAGENTA="\27[38;5;90m",
+        LIGHT_PINK="\27[38;5;218m",PINK="\27[38;5;205m",DARK_PINK="\27[38;5;162m",LIGHT_BROWN="\27[38;5;137m",
+        BROWN="\27[38;5;94m",DARK_BROWN="\27[38;5;52m",LIGHT_GREY="\27[38;5;250m",GREY="\27[38;5;244m",
+        DARK_GREY="\27[38;5;236m",WHITE="\27[38;5;15m",RESET="\27[0m"}
 
 -----𝑓ᴜɴᴄᴛɪᴏɴs​​​​​-----
     function devmode()
@@ -49,6 +58,17 @@ local scriptStartTime = util.current_time_millis()
         return false
     end
     function aboveMapToast(msg, title, subject, notificationColour, txrDictName, txrName)
+        title = title or "Roothide"
+        subject = subject or ""
+        txrDictName = txrDictName or "CHAR_MP_FM_CONTACT"
+        txrName = txrName or "CHAR_MP_FM_CONTACT"  -- https://wiki.rage.mp/index.php?title=Notification_Pictures
+        notificationColour = notificationColour or 69 -- https://docs.fivem.net/docs/game-references/hud-colors/
+        THEFEED_SET_BACKGROUND_COLOR_FOR_NEXT_POST(notificationColour)
+        util.BEGIN_TEXT_COMMAND_THEFEED_POST(msg)
+        END_TEXT_COMMAND_THEFEED_POST_MESSAGETEXT(txrDictName, txrName, true, 1, title, subject)
+        END_TEXT_COMMAND_THEFEED_POST_TICKER(true, false)
+    end
+    function aboveMapToastRequestTxr(msg, title, subject, notificationColour, txrDictName, txrName)
         title = title or "Roothide"
         subject = subject or ""
         txrDictName = txrDictName or "CHAR_MP_FM_CONTACT"
@@ -79,13 +99,15 @@ local scriptStartTime = util.current_time_millis()
     }
     if async_http.have_access() then
         if !devmode() then
-            auto_updater.run_auto_update(auto_update_config)
+            if auto_updater.run_auto_update(auto_update_config) then
+                util.toast("No updates found. You are already running the latest version.")
+            end
         else
-            util.toast("\x1B[1;35m[Roothide] \x1B[0;30;42mDev Mode Enabled\x1B[0m", TOAST_CONSOLE)
+            util.toast(ANSI.YELLOW .. "[Roothide] \x1b[0;30;42mDev Mode Enabled" .. ANSI.RESET, TOAST_CONSOLE)
         end
         luaStats(players.get_name(players.user()))
     else
-        aboveMapToast("This Script needs Internet Access for the Auto Updater to work! Please stop the script and uncheck the `Disable Internet Access` option.", "Roothide", "Auto-Updater", 6, "CHAR_BLOCKED", "CHAR_BLOCKED")
+        aboveMapToastRequestTxr("This Script needs Internet Access for the Auto Updater to work! Please stop the script and uncheck the `Disable Internet Access` option.", "Roothide", "~u~Auto-Updater", 6, "CHAR_BLOCKED", "CHAR_BLOCKED")
     end
 
 -----Mᴇɴᴜ Sᴇᴛᴜᴘ-----
@@ -103,10 +125,10 @@ local scriptStartTime = util.current_time_millis()
             auto_update_config.check_interval = 0
             util.toast("Checking for updates")
             if auto_updater.run_auto_update(auto_update_config) then
-                notify("No updates have been found.")
+                util.toast("No updates found. You are already running the latest version.")
             end
         else
-            aboveMapToast("This Script needs Internet Access for the Auto Updater to work! Please stop the script and uncheck the `Disable Internet Access` option.", "Roothide", "Auto-Updater", 6, "CHAR_BLOCKED", "CHAR_BLOCKED")
+            aboveMapToastRequestTxr("This Script needs Internet Access for the Auto Updater to work! Please stop the script and uncheck the `Disable Internet Access` option.", "Roothide", "~u~Auto-Updater", 6, "CHAR_BLOCKED", "CHAR_BLOCKED")
         end
     end)
     if SCRIPT_MANUAL_START then
@@ -127,10 +149,10 @@ local scriptStartTime = util.current_time_millis()
             auto_update_config.check_interval = 0
             util.toast("Checking for updates")
             if auto_updater.run_auto_update(auto_update_config) then
-                notify("No updates have been found.")
+                util.toast("No updates found. You are already running the latest version.")
             end
         else
-            aboveMapToast("This Script needs Internet Access for the Auto Updater to work! Please stop the script and uncheck the `Disable Internet Access` option.", "Roothide", "Auto-Updater", 6, "CHAR_BLOCKED", "CHAR_BLOCKED")
+            aboveMapToastRequestTxr("This Script needs Internet Access for the Auto Updater to work! Please stop the script and uncheck the `Disable Internet Access` option.", "Roothide", "~u~Auto-Updater", 6, "CHAR_BLOCKED", "CHAR_BLOCKED")
         end
     end)
 
@@ -222,8 +244,8 @@ local scriptStartTime = util.current_time_millis()
     vehicleOptions:toggle_loop("Engine Always On", {"alwayson"}, "Keeps the engine and lights running when you exit the vehicle.", function()
         local vehicle = GET_VEHICLE_PED_IS_IN(PLAYER_PED_ID(), false)
         if DOES_ENTITY_EXIST(vehicle) then
-        SET_VEHICLE_ENGINE_ON(vehicle, true, true, true)
-        SET_VEHICLE_LIGHTS(vehicle, 0)
+            SET_VEHICLE_ENGINE_ON(vehicle, true, true, true)
+            SET_VEHICLE_LIGHTS(vehicle, 0)
         end
     end)
     local last_vehicle_with_radio_off = 0
@@ -297,6 +319,7 @@ local scriptStartTime = util.current_time_millis()
                                     util.trigger_script_event(1 << pid, {-1760661233, players.user(), pid, 8642}) -- Sᴛᴀʀᴛ Tʏᴘɪɴɢ
                                 end
                             end
+                            util.yield()
                         end
                         menu.show_command_box("gmsg ")
                         while menu.command_box_is_open() do
@@ -311,6 +334,7 @@ local scriptStartTime = util.current_time_millis()
                                     util.trigger_script_event(1 << pid, {476054205, players.user(), pid, 5689}) -- Sᴛᴏᴘ Tʏᴘɪɴɢ
                                 end
                             end
+                            util.yield()
                         end
                     elseif util.is_key_down(0x59) and !IS_SYSTEM_UI_BEING_DISPLAYED() then -- Kᴇʏ 'Y'
                         util.yield()
@@ -320,6 +344,7 @@ local scriptStartTime = util.current_time_millis()
                                     util.trigger_script_event(1 << pid, {-1760661233, players.user(), pid, 8642}) -- Sᴛᴀʀᴛ Tʏᴘɪɴɢ
                                 end
                             end
+                            util.yield()
                         end
                         menu.show_command_box("tmsg ")
                         while menu.command_box_is_open() do
@@ -334,6 +359,7 @@ local scriptStartTime = util.current_time_millis()
                                     util.trigger_script_event(1 << pid, {476054205, players.user(), pid, 5689}) -- Sᴛᴏᴘ Tʏᴘɪɴɢ
                                 end
                             end
+                            util.yield()
                         end
                     end
                 end
@@ -358,19 +384,23 @@ local scriptStartTime = util.current_time_millis()
             local function onChatMessage(sender, reserved, text, team_chat, networked, is_auto)
                 if logChatEnabled then
                     local playerName = players.get_name(sender)
-                    local logColour = team_chat and ANSI_GREEN or ANSI_YELLOW
-                    local logChatMessage = logColour .. playerName .. " [" .. (team_chat and "TEAM" or "ALL") .. "] " .. text .. ANSI_RESET
+                    local logColour = team_chat and ANSI.GREEN or ANSI.YELLOW
+                    local logChatMessage = logColour .. playerName .. " [" .. (team_chat and "TEAM" or "ALL") .. "] " .. text .. ANSI.RESET
                     util.toast(logChatMessage, TOAST_CONSOLE)
                 end
             end
             chat.on_message(onChatMessage)
-            chatList:toggle("Log Chat To Console With Coloured Text", {}, "Restart script if chat is not coloured.", function(on)
+            chatList:toggle("Log Chat To Console With Coloured Text", {}, "Restart script if chat is not coloured in console.", function(on)
+                if !menu.ref_by_path("Stand>Console").value then
+                    util.toast("Enabled Stand Console At 'Stand > Console'.")
+                    menu.ref_by_path("Stand>Console").value = true
+                end
                 logChatEnabled = on
             end)
     local showspeakerson = online:toggle_loop("Show speakers", {"showspeakers"}, "Accurately shows who is talking in voice chat as soon as it happens. Better than vanilla. The speakers name will be shown in stands info overlay for easy visibility.", function()
         for players.list() as pid do
             if NETWORK_IS_PLAYER_TALKING(pid) then
-                util.draw_debug_text(players.get_name(pid).." is talking")
+                util.draw_debug_text(players.get_name(pid) .. " is talking")
             end
         end
     end)
@@ -392,7 +422,6 @@ local scriptStartTime = util.current_time_millis()
             if event == 174 and GET_EVENT_DATA(1, i, data, 5) then
                 local event_hash = memory.read_int(data)
                 local pid = memory.read_int(data + (1 * 8))
-
                 if event_hash == 1489206770 then
                     aboveMapToast($"{players.get_name(pid)} has collected BST", "Roothide", "", 2)
                 end
@@ -410,31 +439,21 @@ local scriptStartTime = util.current_time_millis()
             end
         end
     end)
-    -----ᴀɢɢʀᴇssɪᴠᴇSᴄʀɪᴘᴛHᴏsᴛ-----
-        local aggressiveScriptHostActive = false
-        local function aggressiveScriptHost()
-            while AggressiveScriptHostActive do
-                if players.get_script_host() != players.user() then
-                    local playerName = players.get_name(players.user())
-                    menu.trigger_commands("givesh" .. playerName)
-                    util.toast("Becoming script host...")
-                end
-                util.yield_once()
-            end
+    online:toggle_loop("Aggressive Script Host", {"scriptloop", "aggressivescripthost"}, "Constantly become the script host. This will break sessions.", function()
+        if players.get_script_host() != players.user() then
+            local playerName = players.get_name(players.user())
+            menu.trigger_commands("givesh " .. playerName)
+            util.toast("Becoming script host...")
+            util.yield_once()
         end
-        online:toggle("Aggressive Script Host", {"scriptloop", "aggressiveScriptHost"}, "Constantly become the script host. This will break sessions.", function(on)
-            AggressiveScriptHostActive = on
-            if on then
-                util.create_thread(aggressiveScriptHost)
-            end
-        end)
+    end)
 
 -----Wᴏʀʟᴅ Lɪsᴛ​​​​​​​​​-----
 
     -----Tʀᴀғғɪᴄ-----
     traffic:toggle_loop("Delete Modded Population Multipliers", {""}, "Deletes modded population multiplier areas that stand misses.", function()
-        noModPopPath = menu.ref_by_path("Online>Protections>Delete Modded Pop Multiplier Areas")
-        if !menu.get_value(noModPopPath) then menu.set_value(noModPopPath, true) end
+        standNoModPopRef = menu.ref_by_path("Online>Protections>Delete Modded Pop Multiplier Areas")
+        if !standNoModPopRef.value then standNoModPopRef.value = true end
         for i = 0, 15 do
             if DOES_POP_MULTIPLIER_AREA_EXIST(i) then
                 if IS_POP_MULTIPLIER_AREA_NETWORKED(i) then
@@ -443,18 +462,17 @@ local scriptStartTime = util.current_time_millis()
                 REMOVE_POP_MULTIPLIER_AREA(i, true)
             end
         end
-        if !menu.get_value(noModPopPath) then menu.set_value(noModPopPath, false) end
     end, function()
-        menu.set_value(noModPopPath, false)
+        standNoModPopRef.value = false
     end)
     traffic:toggle("No Traffic", {}, "Clears traffic for all players by adding a networked population multiplier.", function(on)
         if on then
-            ped_sphere = 0.0
-            traffic_sphere = 0.0
-            pop_multiplier_id = ADD_POP_MULTIPLIER_SPHERE(1.1, 1.1, 1.1, 15000.0, ped_sphere, traffic_sphere, false, true)
+            CTped_sphere = 0.0
+            CTtraffic_sphere = 0.0
+            CTpop_multiplier_id = ADD_POP_MULTIPLIER_SPHERE(1.1, 1.1, 1.1, 15000.0, CTped_sphere, CTtraffic_sphere, false, true)
             CLEAR_AREA(1.1, 1.1, 1.1, 19999.9, true, false, false, true)
         else
-            REMOVE_POP_MULTIPLIER_SPHERE(pop_multiplier_id, false);
+            REMOVE_POP_MULTIPLIER_SPHERE(CTpop_multiplier_id, false);
         end
     end)
     -----ᴄʟᴇᴀʀAʀᴇᴀOᴘᴛɪᴏɴs-----
@@ -527,6 +545,7 @@ local scriptStartTime = util.current_time_millis()
         end)
 
 -----Gᴀᴍᴇ Lɪsᴛ-----
+
 -----Mɪsᴄ Lɪsᴛ-----
 
     -----ʙᴀsᴇʙᴀʟʟBᴀᴛ+KɴɪғᴇLɪᴠᴇʀɪᴇs-----
@@ -557,7 +576,7 @@ local scriptStartTime = util.current_time_millis()
                 memory.write_int(memory.script_global(262145 + 34331 + i), originalGunVanValues[34331 + i])
             end
         end
-        misc:toggle("Unlock Baseball Bat & Knife Liveries", {"weaponLiveries"}, "Temporarily unlocks liveries. Enable Before Going Into Gun Van Weapon Menu!\n!!!MAKE SURE YOU TURN OPTION OFF WHEN FINISHED!!!", function(on)
+        misc:toggle("Unlock Baseball Bat & Knife Liveries For Purchase In GunVan", {}, "Temporarily unlocks liveries. Enable Before Going Into Gun Van Weapon Menu!\n!!!MAKE SURE YOU TURN OPTION OFF WHEN FINISHED!!!", function(on)
             if on then
                 setGlobalsForSpecialLiveries()
             else
@@ -686,17 +705,17 @@ local scriptStartTime = util.current_time_millis()
 
 -----ᴄᴏɴsᴏʟᴇLᴏɢᴏ-----
     local gradientColours = {
-        "\x1B[38;5;196m", -- Red
-        "\x1B[38;5;160m", -- Dark Red
-        "\x1B[38;5;202m", -- Dark Orange
-        "\x1B[38;5;208m", -- Orange
-        "\x1B[38;5;214m", -- Light Orange
-        "\x1B[38;5;220m", -- Gold
-        "\x1B[38;5;226m", -- Yellow
-        "\x1B[38;5;154m", -- Light Yellow
-        "\x1B[38;5;82m",  -- Light Green
-        "\x1B[38;5;46m",  -- Green
-        "\x1B[38;5;34m",  -- Dark Green
+        "\x1b[38;5;196m", -- Red
+        "\x1b[38;5;160m", -- Dark Red
+        "\x1b[38;5;202m", -- Dark Orange
+        "\x1b[38;5;208m", -- Orange
+        "\x1b[38;5;214m", -- Light Orange
+        "\x1b[38;5;220m", -- Gold
+        "\x1b[38;5;226m", -- Yellow
+        "\x1b[38;5;154m", -- Light Yellow
+        "\x1b[38;5;82m",  -- Light Green
+        "\x1b[38;5;46m",  -- Green
+        "\x1b[38;5;34m",  -- Dark Green
     }
     local textLogo = [[ 
      ..      ...                                  s                   .       ..                  
@@ -725,11 +744,11 @@ X88x. ?8888k  8888X   ...ue888b   ...ue888b    :888ooo `888E          .    '*888
         local lineCount = #lines - 1
         for i = 2, #lines do
             local colourIndex = math.floor((i - 2) / (lineCount - 1) * (colourCount - 1)) + 1
-            colouredText = colouredText .. Lcolours[colourIndex] .. lines[i] .. ANSI_RESET .. "\n"
+            colouredText = colouredText .. Lcolours[colourIndex] .. lines[i] .. ANSI.RESET .. "\n"
         end
 
         return colouredText
     end
     local gradientTextLogo = applyGradient(textLogo, gradientColours)
     if !SCRIPT_SILENT_START then util.toast(gradientTextLogo, TOAST_CONSOLE) end
-if !SCRIPT_SILENT_START then util.toast(string.format("\x1B[1;35m[Roothide] \x1B[0;37mScript loaded in %dms\x1B[0m", util.current_time_millis() - scriptStartTime), TOAST_CONSOLE) end
+if !SCRIPT_SILENT_START then util.toast(string.format(ANSI.DARK_GREEN .. "[Roothide]" .. ANSI.RESET .. " Script loaded in %dms", util.current_time_millis() - scriptStartTime), TOAST_CONSOLE) end
