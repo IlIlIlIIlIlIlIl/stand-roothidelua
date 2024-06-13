@@ -36,7 +36,7 @@ local scriptStartTime = util.current_time_millis()
     end
     colourConsole()
     local consoleToggled = menu.ref_by_path("Stand>Console").value
-    util.create_tick_handler(function()
+    util.create_tick_handler(function() -- Tɪᴄᴋ Hᴀɴᴅʟᴇʀ ᴛᴏ ᴇɴᴀʙʟᴇ ᴄᴏʟᴏᴜʀs ᴡʜᴇɴ ᴄᴏɴsᴏʟᴇ ɪs ᴇɴᴀʙʟᴇᴅ
         if menu.ref_by_path("Stand>Console").value and not consoleToggled then
             util.yield()
             colourConsole()
