@@ -35,6 +35,15 @@ local scriptStartTime = util.current_time_millis()
         end
     end
     colourConsole()
+    local consoleToggled = menu.ref_by_path("Stand>Console").value
+    util.create_tick_handler(function()
+        if menu.ref_by_path("Stand>Console").value and not consoleToggled then
+            util.yield()
+            colourConsole()
+        end
+        consoleToggled = menu.ref_by_path("Stand>Console").value
+    end)
+
     -----Cᴏʟᴏᴜʀ Cᴏᴅᴇs----- https://talyian.github.io/ansicolors/    https://bixense.com/clicolors/
         local ANSI = {RED="\27[38;5;196m",DARK_RED="\27[38;5;160m",DARK_ORANGE="\27[38;5;202m",
         ORANGE="\27[38;5;208m",LIGHT_ORANGE="\27[38;5;214m",GOLD="\27[38;5;220m",YELLOW="\27[38;5;226m",
@@ -158,18 +167,18 @@ local scriptStartTime = util.current_time_millis()
 
 -----Cʜɪʟᴅ Lɪsᴛs-----
     -----Sᴇʟғ Lɪsᴛ-----
-        local weapons = selfList:list("Weapons", {}, "")
+        local weapons = selfList:list("Weapons")
     -----Vᴇʜɪᴄʟᴇ Oᴘᴛɪᴏɴs Lɪsᴛ---​​​​--
-        local seatSwitcher = vehicleOptions:list("Switch Seat", {"switchseat", "seatswitch"}, "")
+        local seatSwitcher = vehicleOptions:list("Switch Seat", {"switchseat", "seatswitch"})
+        local breakDoors = vehicleOptions:list("Break Off Vehicle Parts", {"breakdoors"})
     -----Oɴʟɪɴᴇ Lɪsᴛ-----
-        local protections = online:list("Protections",{"rhprotections"}, "")
-        local chatList = online:list("Chat Options", {}, "")
+        local protections = online:list("Protections",{"rhprotections"})
+        local chatList = online:list("Chat Options")
     -----Wᴏʀʟᴅ Lɪsᴛ​​​​​​​​​-----
-        local traffic = world:list("Traffic", {}, "")    
-        local clearAreaOptions = world:list("Clear Area Options", {}, "")
+        local traffic = world:list("Traffic")    
+        local clearAreaOptions = world:list("Clear Area Options")
 
 -----Sᴇʟғ Lɪsᴛ-----
-
     -----ᴡᴇᴀᴘᴏɴs-----
         -----sɴɪᴘᴇʀZᴏᴏᴍ-----
             local sniper_hashes = {
@@ -223,34 +232,34 @@ local scriptStartTime = util.current_time_millis()
     end)
 
 -----Vᴇʜɪᴄʟᴇ Oᴘᴛɪᴏɴs Lɪsᴛ---​​​​--
-
     -----sᴇᴀᴛSᴡɪᴛᴄʜᴇʀ-----
-        seatRef = seatSwitcher:action("Driver Seat", {"seatdriver"}, "Warp into driver seat.", function()
-            SET_PED_INTO_VEHICLE(GET_PLAYER_PED_SCRIPT_INDEX(players.user()), entities.get_user_vehicle_as_handle(), -1)end)
-        seatRef0 = seatSwitcher:action("Passenger Seat", {"seatpassenger"}, "Warp into passenger seat.", function()
-            SET_PED_INTO_VEHICLE(GET_PLAYER_PED_SCRIPT_INDEX(players.user()), entities.get_user_vehicle_as_handle(), 0)end)
-        seatSwitcher:toggle("Prevent Auto Seat Shuffle", {"noshuffle"}, "Prevents auto shuffling over to drivers seat if it becomes free.", function(toggled)
-            SET_PED_CONFIG_FLAG(GET_PLAYER_PED_SCRIPT_INDEX(players.user()), 184, toggled)end)
-        seatRef1 = seatSwitcher:action("Left Rear", {}, "Warp into rear left seat.", function()
-            SET_PED_INTO_VEHICLE(GET_PLAYER_PED_SCRIPT_INDEX(players.user()), entities.get_user_vehicle_as_handle(), 1)end)
-        seatRef2 = seatSwitcher:action("Right Rear", {}, "Warp into rear right seat.", function()
-            SET_PED_INTO_VEHICLE(GET_PLAYER_PED_SCRIPT_INDEX(players.user()), entities.get_user_vehicle_as_handle(), 2)end)
+        seatSwitcher:action("Driver Seat", {"seatdriver"}, "Warp into driver seat.", function() if entities.get_user_vehicle_as_handle() ~= -1 then SET_PED_INTO_VEHICLE(players.user_ped(), entities.get_user_vehicle_as_handle(), -1) else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
+        seatSwitcher:action("Passenger Seat", {"seatpassenger"}, "Warp into passenger seat.", function() if entities.get_user_vehicle_as_handle() ~= -1 then SET_PED_INTO_VEHICLE(players.user_ped(), entities.get_user_vehicle_as_handle(), 0) else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
+        seatSwitcher:toggle("Prevent Auto Seat Shuffle", {"noshuffle"}, "Prevents auto shuffling over to drivers seat if it becomes free.", function(on) SET_PED_CONFIG_FLAG(players.user_ped(), 184, on) end)
+        seatSwitcher:action("Left Back", {}, "Warp into Back left seat.", function() if entities.get_user_vehicle_as_handle() ~= -1 then SET_PED_INTO_VEHICLE(players.user_ped(), entities.get_user_vehicle_as_handle(), 1) else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
+        seatSwitcher:action("Right Back", {}, "Warp into Back right seat.", function() if entities.get_user_vehicle_as_handle() ~= -1 then SET_PED_INTO_VEHICLE(players.user_ped(), entities.get_user_vehicle_as_handle(), 2) else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
         local seatIndices = {3, 4, 5, 6, 7}
         local seatLabels = {"Seat 5", "Seat 6", "Seat 7", "Seat 8", "Seat 9"}
-        seatSwitcher:textslider_stateful("Other Seats", {}, "For anything larger than 4 seats", seatLabels, function(index, value)
-            local selectedSeatIndex = seatIndices[index]
-            SET_PED_INTO_VEHICLE(GET_PLAYER_PED_SCRIPT_INDEX(players.user()), entities.get_user_vehicle_as_handle(), selectedSeatIndex)
-        end)
+        seatSwitcher:textslider_stateful("Other Seats", {}, "For anything larger than 4 seats", seatLabels, function(index, value) local selectedSeatIndex = seatIndices[index] if entities.get_user_vehicle_as_handle() ~= -1 then SET_PED_INTO_VEHICLE(players.user_ped(), entities.get_user_vehicle_as_handle(), selectedSeatIndex) else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
     vehicleOptions:toggle_loop("Engine Always On", {"alwayson"}, "Keeps the engine and lights running when you exit the vehicle.", function()
-        local vehicle = GET_VEHICLE_PED_IS_IN(PLAYER_PED_ID(), false)
+        local vehicle = GET_VEHICLE_PED_IS_IN(players.user_ped(), false)
         if DOES_ENTITY_EXIST(vehicle) then
             SET_VEHICLE_ENGINE_ON(vehicle, true, true, true)
             SET_VEHICLE_LIGHTS(vehicle, 0)
         end
     end)
+    -----BʀᴇᴀᴋVᴇʜɪᴄʟᴇDᴏᴏʀs-----
+        breakDoors:action("Delete All Parts", {}, "", function() if entities.get_user_vehicle_as_handle() != -1 then for i = -1, 6 do SET_VEHICLE_DOOR_BROKEN(entities.get_user_vehicle_as_handle(), i, true) end util.toast("All parts deleted.") else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
+        breakDoors:action("Delete Driver Door", {}, "", function() if entities.get_user_vehicle_as_handle() != -1 then SET_VEHICLE_DOOR_BROKEN(entities.get_user_vehicle_as_handle(), 0, true) util.toast("Driver door deleted.") else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
+        breakDoors:action("Delete Passenger Door", {}, "", function() if entities.get_user_vehicle_as_handle() != -1 then SET_VEHICLE_DOOR_BROKEN(entities.get_user_vehicle_as_handle(), 1, true) util.toast("Passenger door deleted.") else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
+        breakDoors:action("Delete Back Left Door", {}, "", function() if entities.get_user_vehicle_as_handle() != -1 then SET_VEHICLE_DOOR_BROKEN(entities.get_user_vehicle_as_handle(), 2, true) util.toast("Back left door deleted.") else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
+        breakDoors:action("Delete Back Right Door", {}, "", function() if entities.get_user_vehicle_as_handle() != -1 then SET_VEHICLE_DOOR_BROKEN(entities.get_user_vehicle_as_handle(), 3, true) util.toast("Back right door deleted.") else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
+        breakDoors:action("Delete Hood", {"nohood", "breakhood"}, "", function() if entities.get_user_vehicle_as_handle() != -1 then SET_VEHICLE_DOOR_BROKEN(entities.get_user_vehicle_as_handle(), 4, true) util.toast("Vehicle hood deleted.") else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
+        breakDoors:action("Delete Trunk", {"notrunk", "breaktrunk"}, "", function() if entities.get_user_vehicle_as_handle() != -1 then SET_VEHICLE_DOOR_BROKEN(entities.get_user_vehicle_as_handle(), 5, true) util.toast("Vehicle trunk deleted.") else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
+        breakDoors:action("Delete Trunk2", {"notrunk2", "breaktrunk2"}, "", function() if entities.get_user_vehicle_as_handle() != -1 then SET_VEHICLE_DOOR_BROKEN(entities.get_user_vehicle_as_handle(), 6, true) util.toast("Trunk2 deleted.") else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
     local last_vehicle_with_radio_off = 0
-    vehicleOptions:toggle_loop("Turn Radio Off Automatically", {}, "Turns off the radio each time you get in a vehicle.", function()
-        local current_vehicle = GET_VEHICLE_PED_IS_IN(PLAYER_PED_ID(), false)
+    vehicleOptions:toggle_loop("Turn Radio Off When Entering A Vehicle", {}, "Turns off the radio each time you get in a vehicle.", function()
+        local current_vehicle = GET_VEHICLE_PED_IS_IN(players.user_ped(), false)
         if current_vehicle != 0 then
             if last_vehicle_with_radio_off != current_vehicle and GET_IS_VEHICLE_ENGINE_RUNNING(current_vehicle) then
                 if IS_VEHICLE_RADIO_ON(current_vehicle) then
@@ -267,13 +276,13 @@ local scriptStartTime = util.current_time_millis()
     -----ʀᴀɴᴅᴏᴍGᴀʀᴀɢᴇVᴇʜɪᴄʟᴇ-----
         local function get_all_vehicles(dir)
             local paths = {}
-            for filesystem.list_files(dir) as file do
-                if filesystem.is_dir(file) then
-                    for get_all_vehicles(file) as subfile do
-                        table.insert(paths, subfile)
-                    end
-                else
-                    if string.sub(file, -4) == ".txt" then
+            local stack = {dir}
+            while #stack > 0 do
+                local current_dir = table.remove(stack)
+                for _, file in ipairs(filesystem.list_files(current_dir)) do
+                    if filesystem.is_dir(file) then
+                        table.insert(stack, file)
+                    elseif string.sub(file, -4) == ".txt" then
                         table.insert(paths, file)
                     end
                 end
@@ -281,18 +290,23 @@ local scriptStartTime = util.current_time_millis()
             return paths
         end
         local function vehicle_path_to_stand_ref(path)
-            return menu.ref_by_path("Vehicle>Garage>" .. string.gsub(string.sub(string.sub(path, -((#path) - (#(filesystem.stand_dir() .. [[Vehicles\]])))), 1, -5), "\\", ">"))
+            local vehicles_dir = filesystem.stand_dir() .. "Vehicles\\"
+            local relative_path = path:sub(#vehicles_dir + 1, -5):gsub("\\", ">")
+            return menu.ref_by_path("Vehicle>Garage>" .. relative_path)
         end
         vehicleOptions:action("Random Stand Garage Vehicle", {"randomvehicle", "rv"}, "Picks a random vehicle from your Stand garage.", function()
             local vehicles_dir = filesystem.stand_dir() .. "Vehicles"
             local all_vehicles = get_all_vehicles(vehicles_dir)
+            if #all_vehicles == 0 then
+                util.toast("No vehicles found in the Stand garage.")
+                return
+            end
             local random_vehicle = all_vehicles[math.random(#all_vehicles)]
             local stand_ref = vehicle_path_to_stand_ref(random_vehicle)
             menu.focus(stand_ref)
         end)
 
 -----Oɴʟɪɴᴇ Lɪsᴛ-----
-
     -----Pʀᴏᴛᴇᴄᴛɪᴏɴs-----
         protections:action("Stop All Sounds", {"stopsounds"}, "", function()
             for i = -1,100 do
@@ -390,8 +404,8 @@ local scriptStartTime = util.current_time_millis()
                 end
             end
             chat.on_message(onChatMessage)
-            chatList:toggle("Log Chat To Console With Coloured Text", {}, "Restart script if chat is not coloured in console.", function(on)
-                if !menu.ref_by_path("Stand>Console").value then
+            chatList:toggle("Log Chat To Console With Coloured Text", {}, "Logs all chat messages to the console with colored text. Green for team chat and yellow for all chat.", function(on)
+                if on and !menu.ref_by_path("Stand>Console").value then
                     util.toast("Enabled Stand Console At 'Stand > Console'.")
                     menu.ref_by_path("Stand>Console").value = true
                 end
@@ -449,7 +463,6 @@ local scriptStartTime = util.current_time_millis()
     end)
 
 -----Wᴏʀʟᴅ Lɪsᴛ​​​​​​​​​-----
-
     -----Tʀᴀғғɪᴄ-----
     traffic:toggle_loop("Delete Modded Population Multipliers", {""}, "Deletes modded population multiplier areas that stand misses.", function()
         standNoModPopRef = menu.ref_by_path("Online>Protections>Delete Modded Pop Multiplier Areas")
@@ -547,7 +560,6 @@ local scriptStartTime = util.current_time_millis()
 -----Gᴀᴍᴇ Lɪsᴛ-----
 
 -----Mɪsᴄ Lɪsᴛ-----
-
     -----ʙᴀsᴇʙᴀʟʟBᴀᴛ+KɴɪғᴇLɪᴠᴇʀɪᴇs-----
         local originalGunVanValues = {}     
         local function setGlobalsForSpecialLiveries()
@@ -585,11 +597,10 @@ local scriptStartTime = util.current_time_millis()
         end)
 
 -----DᴇᴠDʙɢ-----
-
     if devmode() then
         local debuglist = menu.list(roothide_menu, "Debug", {"rhdebug"}, "")
 
-        debuglist:action("Restart Script", {}, "Goes through the script stop process, freshly loads the contents of the script file, and starts the main thread again.", function()
+        debuglist:action("Restart Script", {"rs", "rhrs"}, "Goes through the script stop process, freshly loads the contents of the script file, and starts the main thread again.", function()
             util.restart_script()
         end)
         debuglist:action("Log stand lang registered codes", {}, "", function()
@@ -646,7 +657,6 @@ local scriptStartTime = util.current_time_millis()
         end)
 
 -----Pʟᴀʏᴇʀ Oᴘᴛɪᴏɴs-----
-
     local function handlePlayerOptions(pid)
         player_root = menu.player_root(pid)
         crashes_root = menu.ref_by_rel_path(menu.player_root(pid), "Crash")
@@ -656,7 +666,6 @@ local scriptStartTime = util.current_time_millis()
         player_root:getChildren()[1]:attachBefore(menu.shadow_root():action("Spectate", {}, "Toggles 'Nuts Method' Spectate on the player.", function()
             menu.ref_by_rel_path(menu.player_root(pid), "Spectate>Nuts Method"):trigger()
         end))
-
 
         crashes_root:getChildren()[4]:attachAfter(menu.shadow_root():action("ScriptEvent Crash", {}, "Funny scriptevent", function()
             if pid == players.user() then return util.toast(lang.get_localised(-1974706693)) end
@@ -676,6 +685,7 @@ local scriptStartTime = util.current_time_millis()
             util.yield(250)
             util.trigger_script_event(1 << pid, {323285304, players.user(), 2147483647, 0, 0, 0, 2147483647, -1008861746})
         end))
+
         misc_list:action("LoveLetterKick Quick Access Command", {"llk"}, "", function()
             menu.ref_by_rel_path(menu.player_root(pid), "Kick>Love Letter"):trigger()
         end)
@@ -698,7 +708,6 @@ local scriptStartTime = util.current_time_millis()
         end, function()
             SET_REMOTE_PLAYER_AS_GHOST(pid, false)
         end)
-
 
     end
     players.add_command_hook(handlePlayerOptions)
@@ -746,7 +755,6 @@ X88x. ?8888k  8888X   ...ue888b   ...ue888b    :888ooo `888E          .    '*888
             local colourIndex = math.floor((i - 2) / (lineCount - 1) * (colourCount - 1)) + 1
             colouredText = colouredText .. Lcolours[colourIndex] .. lines[i] .. ANSI.RESET .. "\n"
         end
-
         return colouredText
     end
     local gradientTextLogo = applyGradient(textLogo, gradientColours)
