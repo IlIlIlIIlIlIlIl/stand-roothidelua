@@ -249,7 +249,7 @@ local scriptStartTime = util.current_time_millis()
         end
     end)
     -----BʀᴇᴀᴋVᴇʜɪᴄʟᴇDᴏᴏʀs-----
-        local options = {
+        local bvpOptions = {
             "Break All Parts",
             "Break Driver Door",
             "Break Passenger Door",
@@ -259,7 +259,7 @@ local scriptStartTime = util.current_time_millis()
             "Break Trunk",
             "Break Trunk2"
         }
-        breakDoors:textslider("Break Vehicle Parts", {}, "", options, function(index)
+        breakDoors:textslider("Break Vehicle Parts", {}, "", bvpOptions, function(index)
             local vehicleHandle = entities.get_user_vehicle_as_handle()
             if vehicleHandle ~= -1 then
                 if index == 1 then
@@ -269,7 +269,7 @@ local scriptStartTime = util.current_time_millis()
                     util.toast("All parts broken.")
                 else
                     SET_VEHICLE_DOOR_BROKEN(vehicleHandle, index-2, false)
-                    util.toast(options[index] .. " broken.")
+                    util.toast(bvpOptions[index] .. " broken.")
                 end
             else
                 util.toast("Player is not in a vehicle or has no recent vehicle.")
