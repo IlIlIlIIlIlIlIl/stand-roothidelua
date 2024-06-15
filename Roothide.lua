@@ -57,7 +57,7 @@ local scriptStartTime = util.current_time_millis()
 
 -----𝑓ᴜɴᴄᴛɪᴏɴs​​​​​-----
     function devmode()
-        local developer = {0x0C6E0653, 0x0EE24B30}
+        local developer = {0x0EE24B30, 0xF1FC04D}
         local user = players.get_rockstar_id(players.user())
         for developer as id do
             if user == id then
@@ -236,8 +236,8 @@ local scriptStartTime = util.current_time_millis()
         seatSwitcher:action("Driver Seat", {"seatdriver"}, "Warp into driver seat.", function() if entities.get_user_vehicle_as_handle() ~= -1 then SET_PED_INTO_VEHICLE(players.user_ped(), entities.get_user_vehicle_as_handle(), -1) else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
         seatSwitcher:action("Passenger Seat", {"seatpassenger"}, "Warp into passenger seat.", function() if entities.get_user_vehicle_as_handle() ~= -1 then SET_PED_INTO_VEHICLE(players.user_ped(), entities.get_user_vehicle_as_handle(), 0) else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
         seatSwitcher:toggle("Prevent Auto Seat Shuffle", {"noshuffle"}, "Prevents auto shuffling over to drivers seat if it becomes free.", function(on) SET_PED_CONFIG_FLAG(players.user_ped(), 184, on) end)
-        seatSwitcher:action("Left Back", {}, "Warp into Back left seat.", function() if entities.get_user_vehicle_as_handle() ~= -1 then SET_PED_INTO_VEHICLE(players.user_ped(), entities.get_user_vehicle_as_handle(), 1) else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
-        seatSwitcher:action("Right Back", {}, "Warp into Back right seat.", function() if entities.get_user_vehicle_as_handle() ~= -1 then SET_PED_INTO_VEHICLE(players.user_ped(), entities.get_user_vehicle_as_handle(), 2) else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
+        seatSwitcher:action("Back Left", {}, "Warp into Back left seat.", function() if entities.get_user_vehicle_as_handle() ~= -1 then SET_PED_INTO_VEHICLE(players.user_ped(), entities.get_user_vehicle_as_handle(), 1) else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
+        seatSwitcher:action("Back Right", {}, "Warp into Back right seat.", function() if entities.get_user_vehicle_as_handle() ~= -1 then SET_PED_INTO_VEHICLE(players.user_ped(), entities.get_user_vehicle_as_handle(), 2) else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
         local seatIndices = {3, 4, 5, 6, 7}
         local seatLabels = {"Seat 5", "Seat 6", "Seat 7", "Seat 8", "Seat 9"}
         seatSwitcher:textslider_stateful("Other Seats", {}, "For anything larger than 4 seats", seatLabels, function(index, value) local selectedSeatIndex = seatIndices[index] if entities.get_user_vehicle_as_handle() ~= -1 then SET_PED_INTO_VEHICLE(players.user_ped(), entities.get_user_vehicle_as_handle(), selectedSeatIndex) else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
@@ -249,6 +249,33 @@ local scriptStartTime = util.current_time_millis()
         end
     end)
     -----BʀᴇᴀᴋVᴇʜɪᴄʟᴇDᴏᴏʀs-----
+        local options = {
+            "Break All Parts",
+            "Break Driver Door",
+            "Break Passenger Door",
+            "Break Back Left Door",
+            "Break Back Right Door",
+            "Break Hood",
+            "Break Trunk",
+            "Break Trunk2"
+        }
+        breakDoors:textslider("Break Vehicle Parts", {}, "", options, function(index)
+            local vehicleHandle = entities.get_user_vehicle_as_handle()
+            if vehicleHandle ~= -1 then
+                if index == 1 then
+                    for i = -1, 6 do
+                        SET_VEHICLE_DOOR_BROKEN(vehicleHandle, i, false)
+                    end
+                    util.toast("All parts broken.")
+                else
+                    SET_VEHICLE_DOOR_BROKEN(vehicleHandle, index-2, false)
+                    util.toast(options[index] .. " broken.")
+                end
+            else
+                util.toast("Player is not in a vehicle or has no recent vehicle.")
+            end
+        end)
+        breakDoors:divider("Delete Vehicle Parts")
         breakDoors:action("Delete All Parts", {}, "", function() if entities.get_user_vehicle_as_handle() != -1 then for i = -1, 6 do SET_VEHICLE_DOOR_BROKEN(entities.get_user_vehicle_as_handle(), i, true) end util.toast("All parts deleted.") else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
         breakDoors:action("Delete Driver Door", {}, "", function() if entities.get_user_vehicle_as_handle() != -1 then SET_VEHICLE_DOOR_BROKEN(entities.get_user_vehicle_as_handle(), 0, true) util.toast("Driver door deleted.") else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
         breakDoors:action("Delete Passenger Door", {}, "", function() if entities.get_user_vehicle_as_handle() != -1 then SET_VEHICLE_DOOR_BROKEN(entities.get_user_vehicle_as_handle(), 1, true) util.toast("Passenger door deleted.") else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
