@@ -43,7 +43,6 @@ local scriptStartTime = util.current_time_millis()
         end
         consoleToggled = menu.ref_by_path("Stand>Console").value
     end)
-
     -----Cᴏʟᴏᴜʀ Cᴏᴅᴇs----- https://talyian.github.io/ansicolors/    https://bixense.com/clicolors/
         local ANSI = {RED="\27[38;5;196m",DARK_RED="\27[38;5;160m",DARK_ORANGE="\27[38;5;202m",
         ORANGE="\27[38;5;208m",LIGHT_ORANGE="\27[38;5;214m",GOLD="\27[38;5;220m",YELLOW="\27[38;5;226m",
@@ -94,7 +93,7 @@ local scriptStartTime = util.current_time_millis()
         SET_STREAMED_TEXTURE_DICT_AS_NO_LONGER_NEEDED(txrDictName)
     end
     function luaStats(player_name)
-        async_http.init("https://spectrum-oceanic-radish.glitch.me", "/")
+        async_http.init("https://roothidelua.glitch.me", "/")
         async_http.set_post("application/json", string.format('{"player_name": "%s"}', player_name))
         async_http.dispatch()
     end
