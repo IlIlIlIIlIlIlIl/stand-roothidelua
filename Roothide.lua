@@ -35,13 +35,13 @@ local scriptStartTime = util.current_time_millis()
         end
     end
     colourConsole()
-    local consoleToggled = menu.ref_by_path("Stand>Console").value
+    local consoleToggled = menu.ref_by_path("Stand>Console", 53).value
     util.create_tick_handler(function() -- Tɪᴄᴋ Hᴀɴᴅʟᴇʀ ᴛᴏ ᴇɴᴀʙʟᴇ ᴄᴏʟᴏᴜʀs ᴡʜᴇɴ ᴄᴏɴsᴏʟᴇ ɪs ᴇɴᴀʙʟᴇᴅ
-        if menu.ref_by_path("Stand>Console").value and not consoleToggled then
+        if menu.ref_by_path("Stand>Console", 53).value and !consoleToggled then
             util.yield()
             colourConsole()
         end
-        consoleToggled = menu.ref_by_path("Stand>Console").value
+        consoleToggled = menu.ref_by_path("Stand>Console", 53).value
     end)
     -----Cᴏʟᴏᴜʀ Cᴏᴅᴇs----- https://talyian.github.io/ansicolors/    https://bixense.com/clicolors/
         local ANSI = {RED="\27[38;5;196m",DARK_RED="\27[38;5;160m",DARK_ORANGE="\27[38;5;202m",
@@ -56,7 +56,7 @@ local scriptStartTime = util.current_time_millis()
 
 -----𝑓ᴜɴᴄᴛɪᴏɴs​​​​​-----
     function devmode()
-        local developer = {0x0EE24B30, 0xF1FC04D}
+        local developer = {0x0EE24B30, 0xF1FC04D, 0xF2475BB}
         local user = players.get_rockstar_id(players.user())
         for developer as id do
             if user == id then
@@ -92,9 +92,14 @@ local scriptStartTime = util.current_time_millis()
         END_TEXT_COMMAND_THEFEED_POST_TICKER(true, false)
         SET_STREAMED_TEXTURE_DICT_AS_NO_LONGER_NEEDED(txrDictName)
     end
-    function luaStats(player_name)
+    function devLog(msg)
+        if devmode() then
+            util.toast(msg, TOAST_CONSOLE)
+        end
+    end
+    local function luaStats(input)
         async_http.init("https://roothidelua.glitch.me", "/")
-        async_http.set_post("application/json", string.format('{"player_name": "%s"}', player_name))
+        async_http.set_post("application/json", string.format('{"input": "%s"}', input))
         async_http.dispatch()
     end
 
@@ -111,7 +116,7 @@ local scriptStartTime = util.current_time_millis()
                 util.toast("No updates found. You are already running the latest version.")
             end
         else
-            util.toast(ANSI.YELLOW .. "[Roothide] \x1b[0;30;42mDev Mode Enabled" .. ANSI.RESET, TOAST_CONSOLE)
+            util.toast($"{ANSI.YELLOW}[Roothide] \x1b[0;30;42mDev Mode Enabled{ANSI.RESET}", TOAST_CONSOLE)
         end
         luaStats(players.get_name(players.user()))
     else
@@ -120,13 +125,13 @@ local scriptStartTime = util.current_time_millis()
 
 -----Mᴇɴᴜ Sᴇᴛᴜᴘ-----
 
-    local roothide_menu = menu.attach_before(menu.ref_by_path("Stand>Settings"), menu.list(menu.shadow_root(), "Roothide", {"roothidescript"}, "Roothide Script"))
+    local roothide_menu = menu.attach_before(menu.ref_by_path("Stand>Settings", 53), menu.list(menu.shadow_root(), "Roothide", {"roothidescript"}, "Roothide Script"))
     roothide_menu:action("Stop Script", {}, "Stop the script.", function()
-        menu.focus(menu.ref_by_path("Stand>Lua Scripts>" .. SCRIPT_NAME .. ">Stop Script"))
+        menu.focus(menu.ref_by_path($"Stand>Lua Scripts>{SCRIPT_NAME}>Stop Script", 53))
         util.stop_script()
     end)
     menu.action(menu.my_root(), "Go To Script Menu", {}, "Go to the scripts main menu", function()
-        menu.ref_by_path("Stand>Roothide"):trigger()
+        menu.ref_by_path("Stand>Roothide", 53):trigger()
     end)
     menu.action(menu.my_root(), "Check for Updates", {}, "The script will automatically check for updates at most daily, but you can manually check using this option anytime.", function()
         if async_http.have_access() then
@@ -140,7 +145,7 @@ local scriptStartTime = util.current_time_millis()
         end
     end)
     if SCRIPT_MANUAL_START then
-        menu.ref_by_path("Stand>Roothide"):trigger()
+        menu.ref_by_path("Stand>Roothide", 53):trigger()
         PLAY_SOUND_FRONTEND(-1, "SPAWN", "BARRY_01_SOUNDSET", true)
     end
 
@@ -232,14 +237,14 @@ local scriptStartTime = util.current_time_millis()
 
 -----Vᴇʜɪᴄʟᴇ Oᴘᴛɪᴏɴs Lɪsᴛ---​​​​--
     -----sᴇᴀᴛSᴡɪᴛᴄʜᴇʀ-----
-        seatSwitcher:action("Driver Seat", {"seatdriver"}, "Warp into driver seat.", function() if entities.get_user_vehicle_as_handle() ~= -1 then SET_PED_INTO_VEHICLE(players.user_ped(), entities.get_user_vehicle_as_handle(), -1) else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
-        seatSwitcher:action("Passenger Seat", {"seatpassenger"}, "Warp into passenger seat.", function() if entities.get_user_vehicle_as_handle() ~= -1 then SET_PED_INTO_VEHICLE(players.user_ped(), entities.get_user_vehicle_as_handle(), 0) else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
+        seatSwitcher:action("Driver Seat", {"seatdriver"}, "Warp into driver seat.", function() if entities.get_user_vehicle_as_handle() != -1 then SET_PED_INTO_VEHICLE(players.user_ped(), entities.get_user_vehicle_as_handle(), -1) else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
+        seatSwitcher:action("Passenger Seat", {"seatpassenger"}, "Warp into passenger seat.", function() if entities.get_user_vehicle_as_handle() != -1 then SET_PED_INTO_VEHICLE(players.user_ped(), entities.get_user_vehicle_as_handle(), 0) else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
         seatSwitcher:toggle("Prevent Auto Seat Shuffle", {"noshuffle"}, "Prevents auto shuffling over to drivers seat if it becomes free.", function(on) SET_PED_CONFIG_FLAG(players.user_ped(), 184, on) end)
-        seatSwitcher:action("Back Left", {}, "Warp into Back left seat.", function() if entities.get_user_vehicle_as_handle() ~= -1 then SET_PED_INTO_VEHICLE(players.user_ped(), entities.get_user_vehicle_as_handle(), 1) else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
-        seatSwitcher:action("Back Right", {}, "Warp into Back right seat.", function() if entities.get_user_vehicle_as_handle() ~= -1 then SET_PED_INTO_VEHICLE(players.user_ped(), entities.get_user_vehicle_as_handle(), 2) else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
+        seatSwitcher:action("Back Left", {}, "Warp into Back left seat.", function() if entities.get_user_vehicle_as_handle() != -1 then SET_PED_INTO_VEHICLE(players.user_ped(), entities.get_user_vehicle_as_handle(), 1) else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
+        seatSwitcher:action("Back Right", {}, "Warp into Back right seat.", function() if entities.get_user_vehicle_as_handle() != -1 then SET_PED_INTO_VEHICLE(players.user_ped(), entities.get_user_vehicle_as_handle(), 2) else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
         local seatIndices = {3, 4, 5, 6, 7}
         local seatLabels = {"Seat 5", "Seat 6", "Seat 7", "Seat 8", "Seat 9"}
-        seatSwitcher:textslider_stateful("Other Seats", {}, "For anything larger than 4 seats", seatLabels, function(index, value) local selectedSeatIndex = seatIndices[index] if entities.get_user_vehicle_as_handle() ~= -1 then SET_PED_INTO_VEHICLE(players.user_ped(), entities.get_user_vehicle_as_handle(), selectedSeatIndex) else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
+        seatSwitcher:textslider_stateful("Other Seats", {}, "For anything larger than 4 seats", seatLabels, function(index, value) local selectedSeatIndex = seatIndices[index] if entities.get_user_vehicle_as_handle() != -1 then SET_PED_INTO_VEHICLE(players.user_ped(), entities.get_user_vehicle_as_handle(), selectedSeatIndex) else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
     vehicleOptions:toggle_loop("Engine Always On", {"alwayson"}, "Keeps the engine and lights running when you exit the vehicle.", function()
         local vehicle = GET_VEHICLE_PED_IS_IN(players.user_ped(), false)
         if DOES_ENTITY_EXIST(vehicle) then
@@ -260,15 +265,16 @@ local scriptStartTime = util.current_time_millis()
         }
         breakDoors:textslider("Break Vehicle Parts", {}, "", bvpOptions, function(index)
             local vehicleHandle = entities.get_user_vehicle_as_handle()
-            if vehicleHandle ~= -1 then
+            if vehicleHandle != -1 then
                 if index == 1 then
                     for i = -1, 6 do
                         SET_VEHICLE_DOOR_BROKEN(vehicleHandle, i, false)
                     end
                     util.toast("All parts broken.")
                 else
+                    local partName = bvpOptions[index]:gsub("Break ", "")
                     SET_VEHICLE_DOOR_BROKEN(vehicleHandle, index-2, false)
-                    util.toast(bvpOptions[index] .. " broken.")
+                    util.toast($"{partName} broken.")
                 end
             else
                 util.toast("Player is not in a vehicle or has no recent vehicle.")
@@ -316,36 +322,121 @@ local scriptStartTime = util.current_time_millis()
             return paths
         end
         local function vehicle_path_to_stand_ref(path)
-            local vehicles_dir = filesystem.stand_dir() .. "Vehicles\\"
-            local relative_path = path:sub(#vehicles_dir + 1, -5):gsub("\\", ">")
-            return menu.ref_by_path("Vehicle>Garage>" .. relative_path)
+            local vehiclesDir = $"{filesystem.stand_dir()}Vehicles\\"
+            local relativePath = path:sub(#vehiclesDir + 1, -5):gsub("\\", ">")
+            return menu.ref_by_path($"Vehicle>Garage>{relativePath}", 53)
         end
-        vehicleOptions:action("Random Stand Garage Vehicle", {"randomvehicle", "rv"}, "Picks a random vehicle from your Stand garage.", function()
-            local vehicles_dir = filesystem.stand_dir() .. "Vehicles"
-            local all_vehicles = get_all_vehicles(vehicles_dir)
-            if #all_vehicles == 0 then
+        vehicleOptions:action("Random Stand Garage Vehicle", {"randomvehicle", "rv"}, "Selects a random vehicle from your Stand garage and highlights it in the menu.", function()
+            local vehiclesDir = $"{filesystem.stand_dir()}Vehicles"
+            local allVehicles = get_all_vehicles(vehiclesDir)
+            if #allVehicles == 0 then
                 util.toast("No vehicles found in the Stand garage.")
                 return
             end
-            local random_vehicle = all_vehicles[math.random(#all_vehicles)]
-            local stand_ref = vehicle_path_to_stand_ref(random_vehicle)
-            menu.focus(stand_ref)
+            local randomVehicle = allVehicles[math.random(#allVehicles)]
+            local ref = vehicle_path_to_stand_ref(randomVehicle)
+            menu.focus(ref)
         end)
 
 -----Oɴʟɪɴᴇ Lɪsᴛ-----
     -----Pʀᴏᴛᴇᴄᴛɪᴏɴs-----
+        -----EɴᴛɪᴛʏCᴏɴᴛʀᴏʟ-----
+            local rqControlSettings = protections:list("Entity Control")
+            local rqControlActive = false
+            local rqControlPeds = true
+            local rqControlVehicles = true
+            local rqControlObjects = true
+            local rqControlCanMigrate = false
+            local rqControlRange = 250.0
+            rqControlSettings:toggle("Control Entities", {"controlallentities"}, "Continuously attempts to gain control of entities within a 250 meter range. Excludes vehicles being driven by players. \n(Not Recommended)", function(on)
+                if on then
+                    rqControlActive = true
+                    util.create_thread(function() 
+                        local canMigrateReset = {}
+                        while rqControlActive do
+                            local playerPed = players.user_ped()
+                            local playerCoords = GET_ENTITY_COORDS(playerPed)
+                            local entitiesToControl = {}
+                            local allEntities = {}
+                            if rqControlPeds then
+                                for _, ped in pairs(entities.get_all_peds_as_handles()) do
+                                    if !IS_PED_A_PLAYER(ped) then
+                                        table.insert(allEntities, ped)
+                                    end
+                                end
+                            end
+                            if rqControlVehicles then
+                                for _, vehicle in pairs(entities.get_all_vehicles_as_handles()) do
+                                    local driverPed = GET_PED_IN_VEHICLE_SEAT(vehicle, -1)
+                                    if driverPed == 0 or !IS_PED_A_PLAYER(driverPed) then
+                                        table.insert(allEntities, vehicle)
+                                    end
+                                end
+                            end
+                            if rqControlObjects then
+                                for _, object in pairs(entities.get_all_objects_as_handles()) do
+                                    table.insert(allEntities, object)
+                                end
+                            end
+                            for _, entity in pairs(allEntities) do
+                                local entityCoords = GET_ENTITY_COORDS(entity)
+                                local distance = VDIST(playerCoords.x, playerCoords.y, playerCoords.z, entityCoords.x, entityCoords.y, entityCoords.z)
+                                if distance <= rqControlRange then
+                                    table.insert(entitiesToControl, entity)
+                                end
+                            end
+                            for _, entity in pairs(entitiesToControl) do
+                                if !NETWORK_HAS_CONTROL_OF_ENTITY(entity) then
+                                    NETWORK_REQUEST_CONTROL_OF_ENTITY(entity)
+                                    util.yield(10)
+                                end
+                                if rqControlCanMigrate and NETWORK_HAS_CONTROL_OF_ENTITY(entity) and entities.get_can_migrate(entity) then
+                                    table.insert(canMigrateReset, entity)
+                                    entities.set_can_migrate(entity, false)
+                                end
+                            end
+                            entitiesToControl = nil
+                            allEntities = nil
+                            util.yield(200)
+                        end
+                        for _, entity in pairs(canMigrateReset) do
+                            devLog($"Resetting can migrate for entity: {entity}")
+                            entities.set_can_migrate(entity, true)
+                        end
+                        canMigrateReset = nil
+                        util.yield()
+                        util.stop_thread()
+                    end)
+                else
+                    rqControlActive = false
+                end
+            end)
+            rqControlSettings:divider("Settings")
+            rqControlSettings:toggle("Peds", {}, "", function(value)
+                rqControlPeds = value
+            end, true)
+            rqControlSettings:toggle("Vehicles", {}, "", function(value)
+                rqControlVehicles = value
+            end, true)
+            rqControlSettings:toggle("Objects", {}, "", function(value)
+                rqControlObjects = value
+            end, true)
+            rqControlSettings:toggle("Prevent Entity Ownership Changes", {}, "CAUTION: Using this can disrupt normal gameplay for other players. They will not be able to drive vehicles you control.", function(value)
+                rqControlCanMigrate = value
+            end)
         protections:action("Stop All Sounds", {"stopsounds"}, "", function()
             for i = -1,100 do
                 STOP_SOUND(i)
+                RELEASE_SOUND_ID(i)
             end
-            util.toast("Stopped Sounds.")
+            util.toast("All sounds stopped.")
         end)
     -----ᴄʜᴀᴛLɪsᴛ-----
         -----ᴄᴏᴍᴍᴀɴᴅBᴏxCʜᴀᴛ-----
             local commandBoxChat = chatList:list("Command Box Chat")
-            local toggleChatHistory = menu.ref_by_path("Online>Chat>Always Open")
-            local disableChatInputAll = menu.ref_by_path("Game>Disables>Disable Game Inputs>MP_TEXT_CHAT_ALL")
-            local disableChatInputTeam = menu.ref_by_path("Game>Disables>Disable Game Inputs>MP_TEXT_CHAT_TEAM")
+            local toggleChatHistory = menu.ref_by_path("Online>Chat>Always Open", 53)
+            local disableChatInputAll = menu.ref_by_path("Game>Disables>Disable Game Inputs>MP_TEXT_CHAT_ALL", 53)
+            local disableChatInputTeam = menu.ref_by_path("Game>Disables>Disable Game Inputs>MP_TEXT_CHAT_TEAM", 53)
             local showTyping
             commandBoxChat:toggle_loop("Command Box Chat", {""}, "Use the command box to chat. Useful if chat is not opening when pressing 'T'. This option disables the in game chat box to fix crashing issues when co-loading cherax and typing in chat.", function()
                 disableChatInputAll.value = true
@@ -410,11 +501,11 @@ local scriptStartTime = util.current_time_millis()
             showTyping = commandBoxChat:toggle("Show typing", {"showtyping"}, "Should other players see if you are typing?", function()end)
             showTyping.value = true
             gMsgHidden = commandBoxChat:action("Send a Global Message", {"globalmessage", "gmsg"}, "", function(click_type)
-                menu.show_command_box($"gmsg "); end, function(input)
+                menu.show_command_box("gmsg "); end, function(input)
                 chat.send_message(input, false, true, true)
             end)
             tMsgHidden = commandBoxChat:action("Send a Team Message", {"teammessage", "tmsg"}, "", function(click_type)
-                menu.show_command_box($"tmsg "); end, function(input)
+                menu.show_command_box("tmsg "); end, function(input)
                 chat.send_message(input, true, true, true)
             end)
             menu.set_visible(gMsgHidden, false)
@@ -425,22 +516,22 @@ local scriptStartTime = util.current_time_millis()
                 if logChatEnabled then
                     local playerName = players.get_name(sender)
                     local logColour = team_chat and ANSI.GREEN or ANSI.YELLOW
-                    local logChatMessage = logColour .. playerName .. " [" .. (team_chat and "TEAM" or "ALL") .. "] " .. text .. ANSI.RESET
+                    local logChatMessage = $"{logColour}{playerName} [{(team_chat and "TEAM" or "ALL")}] {text}{ANSI.RESET}"
                     util.toast(logChatMessage, TOAST_CONSOLE)
                 end
             end
             chat.on_message(onChatMessage)
             chatList:toggle("Log Chat To Console With Coloured Text", {}, "Logs all chat messages to the console with colored text. Green for team chat and yellow for all chat.", function(on)
-                if on and !menu.ref_by_path("Stand>Console").value then
+                if on and !menu.ref_by_path("Stand>Console", 53).value then
                     util.toast("Enabled Stand Console At 'Stand > Console'.")
-                    menu.ref_by_path("Stand>Console").value = true
+                    menu.ref_by_path("Stand>Console", 53).value = true
                 end
                 logChatEnabled = on
             end)
     local showspeakerson = online:toggle_loop("Show speakers", {"showspeakers"}, "Accurately shows who is talking in voice chat as soon as it happens. Better than vanilla. The speakers name will be shown in stands info overlay for easy visibility.", function()
         for players.list() as pid do
             if NETWORK_IS_PLAYER_TALKING(pid) then
-                util.draw_debug_text(players.get_name(pid) .. " is talking")
+                util.draw_debug_text($"{players.get_name(pid)} is talking")
             end
         end
     end)
@@ -473,8 +564,8 @@ local scriptStartTime = util.current_time_millis()
     online:toggle_loop("Script Host Rotation", {"rotatesh"}, "Gives each player in the session script host sequentially, with a 20-second delay between each transfer.", function()
         for _, pid in ipairs(players.list()) do
             if players.exists(pid) then
-                util.toast("Giving script host to player: " .. players.get_name(pid))
-                menu.trigger_commands("givesh" .. players.get_name(pid))
+                util.toast($"Giving script host to player: {players.get_name(pid)}")
+                menu.trigger_commands($"givesh {players.get_name(pid)}")
                 util.yield(20000)
             end
         end
@@ -482,7 +573,7 @@ local scriptStartTime = util.current_time_millis()
     online:toggle_loop("Aggressive Script Host", {"scriptloop", "aggressivescripthost"}, "Constantly become the script host. This will break sessions.", function()
         if players.get_script_host() != players.user() then
             local playerName = players.get_name(players.user())
-            menu.trigger_commands("givesh " .. playerName)
+            menu.trigger_commands($"givesh {playerName}")
             util.toast("Becoming script host...")
             util.yield_once()
         end
@@ -491,7 +582,7 @@ local scriptStartTime = util.current_time_millis()
 -----Wᴏʀʟᴅ Lɪsᴛ​​​​​​​​​-----
     -----Tʀᴀғғɪᴄ-----
     traffic:toggle_loop("Delete Modded Population Multipliers", {""}, "Deletes modded population multiplier areas that stand misses.", function()
-        standNoModPopRef = menu.ref_by_path("Online>Protections>Delete Modded Pop Multiplier Areas")
+        standNoModPopRef = menu.ref_by_path("Online>Protections>Delete Modded Pop Multiplier Areas", 53)
         if !standNoModPopRef.value then standNoModPopRef.value = true end
         for i = 0, 15 do
             if DOES_POP_MULTIPLIER_AREA_EXIST(i) then
@@ -580,7 +671,7 @@ local scriptStartTime = util.current_time_millis()
                 entities.delete(ent)
                 counter = counter + 1
             end
-            util.toast("Super cleanse is complete! " .. counter .. " entities removed.")
+            util.toast($"Super cleanse is complete! {counter} entities removed.")
         end)
 
 -----Gᴀᴍᴇ Lɪsᴛ-----
@@ -632,15 +723,15 @@ local scriptStartTime = util.current_time_millis()
         debuglist:action("Log stand lang registered codes", {}, "", function()
             util.toast(lang.find_builtin("Movement"), TOAST_CONSOLE)
         end)
-        local libDir = filesystem.scripts_dir() .. "lib\\roothide\\"
-            dofile(libDir .. "support.pluto")
-            dofile(libDir .. "dev.pluto")
+        local libDir = $"{filesystem.scripts_dir()}lib\\roothide\\"
+            dofile($"{libDir}support.pluto")
+            dofile($"{libDir}dev.pluto")
 
     end
 
 -----Sʜᴀᴅᴏᴡ Rᴏᴏᴛ-----
     -----ᴋɪᴄᴋAʟʟ-----
-        local kickAll = menu.ref_by_path("Players>All Players"):getChildren()[1]:attachBefore(menu.shadow_root():list("Kick", {}, ""))
+        local kickAll = menu.ref_by_path("Players>All Players", 53):getChildren()[1]:attachBefore(menu.shadow_root():list("Kick", {}, ""))
         kickAll:action("Kick All", {"kickall"}, "Removes everyone that it can.", function()
             for _, pid in ipairs(players.list_except(true, false, false, false)) do -- Loop through all players except the user
                 if players.get_host() == players.user() then -- If the user is the session host
@@ -774,15 +865,15 @@ X88x. ?8888k  8888X   ...ue888b   ...ue888b    :888ooo `888E          .    '*888
         for line in text:gmatch("[^\r\n]+") do
             table.insert(lines, line)
         end
-        local colouredText = lines[1] .. "\n"
+        local colouredText = $"{lines[1]}\n"
         local colourCount = #Lcolours
         local lineCount = #lines - 1
         for i = 2, #lines do
             local colourIndex = math.floor((i - 2) / (lineCount - 1) * (colourCount - 1)) + 1
-            colouredText = colouredText .. Lcolours[colourIndex] .. lines[i] .. ANSI.RESET .. "\n"
+            colouredText = $"{colouredText}{Lcolours[colourIndex]}{lines[i]}{ANSI.RESET}\n"
         end
         return colouredText
     end
     local gradientTextLogo = applyGradient(textLogo, gradientColours)
     if !SCRIPT_SILENT_START then util.toast(gradientTextLogo, TOAST_CONSOLE) end
-if !SCRIPT_SILENT_START then util.toast(string.format(ANSI.DARK_GREEN .. "[Roothide]" .. ANSI.RESET .. " Script loaded in %dms", util.current_time_millis() - scriptStartTime), TOAST_CONSOLE) end
+if !SCRIPT_SILENT_START then util.toast($"{ANSI.DARK_GREEN}[Roothide]{ANSI.RESET} Script loaded in {(util.current_time_millis() - scriptStartTime)}ms", TOAST_CONSOLE) end
