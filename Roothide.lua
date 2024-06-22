@@ -93,9 +93,7 @@ local scriptStartTime = util.current_time_millis()
         SET_STREAMED_TEXTURE_DICT_AS_NO_LONGER_NEEDED(txrDictName)
     end
     function devLog(msg)
-        if devmode() then
-            util.toast(msg, TOAST_CONSOLE)
-        end
+        if devmode() then util.toast(msg, TOAST_CONSOLE) end
     end
     local function luaStats(input)
         async_http.init("https://roothidelua.glitch.me", "/")
@@ -172,6 +170,7 @@ local scriptStartTime = util.current_time_millis()
 -----Cʜɪʟᴅ Lɪsᴛs-----
     -----Sᴇʟғ Lɪsᴛ-----
         local weapons = selfList:list("Weapons")
+        local ragdollOptions = selfList:list("Ragdoll Options")
     -----Vᴇʜɪᴄʟᴇ Oᴘᴛɪᴏɴs Lɪsᴛ---​​​​--
         local seatSwitcher = vehicleOptions:list("Switch Seat", {"switchseat", "seatswitch"})
         local breakDoors = vehicleOptions:list("Break Off Vehicle Parts", {"breakdoors"})
@@ -231,9 +230,51 @@ local scriptStartTime = util.current_time_millis()
                     zoomOut_pressed_value = false
                 end
             end)
-    selfList:toggle_loop("True No Ragdoll", {}, "Speeds up getting up after being knocked down.", function()
-        SET_PED_CONFIG_FLAG(players.user_ped(), 227, IS_PLAYER_PLAYING(players.user()))
-    end)
+    -----ʀᴀɢᴅᴏʟʟOᴘᴛɪᴏɴs-----
+        local ragdollKey = 0x51 -- Default key is 'Q'
+        local ragdollType = 0
+        local playerIsRagdoll = false
+        ragdollOptions:toggle_loop("Quick Stand", {}, "Allows you to get up faster when knocked down.", function()
+            SET_PED_CONFIG_FLAG(players.user_ped(), 227, IS_PLAYER_PLAYING(players.user())) end, function() SET_PED_CONFIG_FLAG(players.user_ped(), 227, false)
+        end)
+        ragdollOptions:toggle("[Stand] Clumsiness", {}, "Toggles the 'Clumsiness' option in Stand's Self tab, making your character more prone to tripping and falling.", function(on)
+            menu.ref_by_path("Self>Clumsiness").value = on
+        end)
+        ragdollOptions:toggle_loop("Stay Down", {}, "Prevents you from getting back up after being ragdolled.", function()
+            if menu.ref_by_path("Self>Gracefulness").value then
+                util.toast("Pro Tip: Don't enable Gracefulness and Stay Down simultaneously. ;)")
+                menu.ref_by_path("Stand>Roothide>Self>Ragdoll Options>Stay Down", 53).value = false
+            end
+            if IS_PED_RAGDOLL(players.user_ped()) then
+                playerIsRagdoll = true
+            end
+            if playerIsRagdoll then
+                SET_PED_TO_RAGDOLL(players.user_ped(), 750, 750, 0, false, false, false)
+            end
+        end, function() playerIsRagdoll = false end)
+        ragdollOptions:divider("Ragdoll Toggle")
+        ragdollOptions:toggle_loop("Ragdoll Toggle", {"ragdolltoggle"}, "Hold the specified key to make your character ragdoll and release to recover.", function()
+            if menu.ref_by_path("Self>Gracefulness").value then
+                util.toast("Pro Tip: Don't enable Gracefulness and Ragdoll Toggle simultaneously. ;)")
+                menu.ref_by_path("Stand>Roothide>Self>Ragdoll Options>Ragdoll Toggle", 53).value = false
+            end
+            if !menu.command_box_is_open() and !IS_MP_TEXT_CHAT_TYPING() and !IS_SYSTEM_UI_BEING_DISPLAYED() and util.is_key_down(ragdollKey) then
+                SET_PED_TO_RAGDOLL(players.user_ped(), 750, 750, ragdollType, false, false, false)
+            end
+            if ragdollKey == 0xA2 then
+                menu.ref_by_path("Game>Disables>Disable Game Inputs>DUCK", 53).value = true
+            else
+                menu.ref_by_path("Game>Disables>Disable Game Inputs>DUCK", 53).value = false
+            end
+        end, function() menu.ref_by_path("Game>Disables>Disable Game Inputs>DUCK", 53).value = false end)
+        ragdollOptions:list_select("Ragdoll Toggle Key", {}, "Change the key used for Ragdoll Toggle.", {
+            {0x51, "Q"},{0x45, "E"},{0x52, "R"},{0x58, "X"},{0xA2, "Left Control"}}, 0x51, function(value, menu_name)
+            ragdollKey = value
+        end)
+        ragdollOptions:list_select("Ragdoll Type", {}, "Change the type of ragdoll used for Ragdoll Toggle.", {
+            {0, "Normal"},{2, "Narrow leg stumble"},{3, "Wide leg stumble"}}, 0, function(value, menu_name)
+            ragdollType = value
+        end)
 
 -----Vᴇʜɪᴄʟᴇ Oᴘᴛɪᴏɴs Lɪsᴛ---​​​​--
     -----sᴇᴀᴛSᴡɪᴛᴄʜᴇʀ-----
@@ -347,15 +388,13 @@ local scriptStartTime = util.current_time_millis()
             local rqControlVehicles = true
             local rqControlObjects = true
             local rqControlCanMigrate = false
-            local rqControlRange = 250.0
             rqControlSettings:toggle("Control Entities", {"controlallentities"}, "Continuously attempts to gain control of entities within a 250 meter range. Excludes vehicles being driven by players. \n(Not Recommended)", function(on)
                 if on then
                     rqControlActive = true
                     util.create_thread(function() 
                         local canMigrateReset = {}
                         while rqControlActive do
-                            local playerPed = players.user_ped()
-                            local playerCoords = GET_ENTITY_COORDS(playerPed)
+                            local playerCoords = GET_ENTITY_COORDS(players.user_ped())
                             local entitiesToControl = {}
                             local allEntities = {}
                             if rqControlPeds then
@@ -381,7 +420,7 @@ local scriptStartTime = util.current_time_millis()
                             for _, entity in pairs(allEntities) do
                                 local entityCoords = GET_ENTITY_COORDS(entity)
                                 local distance = VDIST(playerCoords.x, playerCoords.y, playerCoords.z, entityCoords.x, entityCoords.y, entityCoords.z)
-                                if distance <= rqControlRange then
+                                if distance <= 250.0 then
                                     table.insert(entitiesToControl, entity)
                                 end
                             end
@@ -498,8 +537,7 @@ local scriptStartTime = util.current_time_millis()
                 disableChatInputAll.value = false
                 disableChatInputTeam.value = false
             end)
-            showTyping = commandBoxChat:toggle("Show typing", {"showtyping"}, "Should other players see if you are typing?", function()end)
-            showTyping.value = true
+            showTyping = commandBoxChat:toggle("Show typing", {"showtyping"}, "Should other players see if you are typing?", function()end, true)
             gMsgHidden = commandBoxChat:action("Send a Global Message", {"globalmessage", "gmsg"}, "", function(click_type)
                 menu.show_command_box("gmsg "); end, function(input)
                 chat.send_message(input, false, true, true)
