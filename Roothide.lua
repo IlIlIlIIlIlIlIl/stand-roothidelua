@@ -44,15 +44,18 @@ local scriptStartTime = util.current_time_millis()
         consoleToggled = menu.ref_by_path("Stand>Console", 53).value
     end)
     -----Cᴏʟᴏᴜʀ Cᴏᴅᴇs----- https://talyian.github.io/ansicolors/    https://bixense.com/clicolors/
-        local ANSI = {RED="\27[38;5;196m",DARK_RED="\27[38;5;160m",DARK_ORANGE="\27[38;5;202m",
-        ORANGE="\27[38;5;208m",LIGHT_ORANGE="\27[38;5;214m",GOLD="\27[38;5;220m",YELLOW="\27[38;5;226m",
-        LIGHT_YELLOW="\27[38;5;154m",LIGHT_GREEN="\27[38;5;82m",GREEN="\27[38;5;46m",DARK_GREEN="\27[38;5;34m",
-        LIGHT_BLUE="\27[38;5;45m",BLUE="\27[38;5;21m",DARK_BLUE="\27[38;5;19m",LIGHT_CYAN="\27[38;5;87m",
-        CYAN="\27[38;5;51m",DARK_CYAN="\27[38;5;30m",LIGHT_PURPLE="\27[38;5;177m",PURPLE="\27[38;5;93m",
-        DARK_PURPLE="\27[38;5;55m",LIGHT_MAGENTA="\27[38;5;213m",MAGENTA="\27[38;5;201m",DARK_MAGENTA="\27[38;5;90m",
-        LIGHT_PINK="\27[38;5;218m",PINK="\27[38;5;205m",DARK_PINK="\27[38;5;162m",LIGHT_BROWN="\27[38;5;137m",
-        BROWN="\27[38;5;94m",DARK_BROWN="\27[38;5;52m",LIGHT_GREY="\27[38;5;250m",GREY="\27[38;5;244m",
-        DARK_GREY="\27[38;5;236m",WHITE="\27[38;5;15m",RESET="\27[0m"}
+local ANSI = {
+    RED = "\27[38;5;196m", DARK_RED = "\27[38;5;52m", DARK_ORANGE = "\27[38;5;202m",
+    ORANGE = "\27[38;5;208m", LIGHT_ORANGE = "\27[38;5;214m", GOLD = "\27[38;5;220m",
+    YELLOW = "\27[38;5;226m", LIGHT_GREEN = "\27[38;5;154m", GREEN = "\27[38;5;46m",
+    DARK_GREEN = "\27[38;5;34m", LIGHT_BLUE = "\27[38;5;45m", BLUE = "\27[38;5;21m",
+    CYAN = "\27[38;5;51m", DARK_CYAN = "\27[38;5;30m", LIGHT_PURPLE = "\27[38;5;177m",
+    PURPLE = "\27[38;5;93m", DARK_PURPLE = "\27[38;5;55m", LIGHT_MAGENTA = "\27[38;5;213m",
+    MAGENTA = "\27[38;5;201m", DARK_MAGENTA = "\27[38;5;90m", LIGHT_PINK = "\27[38;5;218m",
+    PINK = "\27[38;5;205m", DARK_PINK = "\27[38;5;162m", LIGHT_BROWN = "\27[38;5;137m",
+    BROWN = "\27[38;5;94m", LIGHT_GREY = "\27[38;5;250m", GREY = "\27[38;5;244m",
+    DARK_GREY = "\27[38;5;236m", WHITE = "\27[38;5;15m", RESET = "\27[0m"
+}
 
 -----𝑓ᴜɴᴄᴛɪᴏɴs​​​​​-----
     function devmode()
@@ -286,14 +289,7 @@ local scriptStartTime = util.current_time_millis()
         local seatIndices = {3, 4, 5, 6, 7}
         local seatLabels = {"Seat 5", "Seat 6", "Seat 7", "Seat 8", "Seat 9"}
         seatSwitcher:textslider_stateful("Other Seats", {}, "For anything larger than 4 seats", seatLabels, function(index, value) local selectedSeatIndex = seatIndices[index] if entities.get_user_vehicle_as_handle() != -1 then SET_PED_INTO_VEHICLE(players.user_ped(), entities.get_user_vehicle_as_handle(), selectedSeatIndex) else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
-    vehicleOptions:toggle_loop("Engine Always On", {"alwayson"}, "Keeps the engine and lights running when you exit the vehicle.", function()
-        local vehicle = GET_VEHICLE_PED_IS_IN(players.user_ped(), false)
-        if DOES_ENTITY_EXIST(vehicle) then
-            SET_VEHICLE_ENGINE_ON(vehicle, true, true, true)
-            SET_VEHICLE_LIGHTS(vehicle, 0)
-        end
-    end)
-    -----BʀᴇᴀᴋVᴇʜɪᴄʟᴇDᴏᴏʀs-----
+    -----BʀᴇᴀᴋOғғVᴇʜɪᴄʟᴇPᴀʀᴛs-----
         local bvpOptions = {
             "Break All Parts",
             "Break Driver Door",
@@ -330,6 +326,13 @@ local scriptStartTime = util.current_time_millis()
         breakDoors:action("Delete Hood", {"nohood", "breakhood"}, "", function() if entities.get_user_vehicle_as_handle() != -1 then SET_VEHICLE_DOOR_BROKEN(entities.get_user_vehicle_as_handle(), 4, true) util.toast("Vehicle hood deleted.") else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
         breakDoors:action("Delete Trunk", {"notrunk", "breaktrunk"}, "", function() if entities.get_user_vehicle_as_handle() != -1 then SET_VEHICLE_DOOR_BROKEN(entities.get_user_vehicle_as_handle(), 5, true) util.toast("Vehicle trunk deleted.") else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
         breakDoors:action("Delete Trunk2", {"notrunk2", "breaktrunk2"}, "", function() if entities.get_user_vehicle_as_handle() != -1 then SET_VEHICLE_DOOR_BROKEN(entities.get_user_vehicle_as_handle(), 6, true) util.toast("Trunk2 deleted.") else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
+    vehicleOptions:toggle_loop("Engine Always On", {"alwayson"}, "Keeps the engine and lights running when you exit the vehicle.", function()
+        local vehicle = GET_VEHICLE_PED_IS_IN(players.user_ped(), false)
+        if DOES_ENTITY_EXIST(vehicle) then
+            SET_VEHICLE_ENGINE_ON(vehicle, true, true, true)
+            SET_VEHICLE_LIGHTS(vehicle, 0)
+        end
+    end)
     local last_vehicle_with_radio_off = 0
     vehicleOptions:toggle_loop("Turn Radio Off When Entering A Vehicle", {}, "Turns off the radio each time you get in a vehicle.", function()
         local current_vehicle = GET_VEHICLE_PED_IS_IN(players.user_ped(), false)
@@ -549,22 +552,36 @@ local scriptStartTime = util.current_time_millis()
             menu.set_visible(gMsgHidden, false)
             menu.set_visible(tMsgHidden, false)
         -----ʟᴏɢCʜᴀᴛ-----
+            local chatColours = {[1] = ANSI.RED, [2] = ANSI.DARK_RED, [3] = ANSI.DARK_ORANGE, [4] = ANSI.ORANGE, [5] = ANSI.LIGHT_ORANGE, [6] = ANSI.GOLD, [7] = ANSI.YELLOW, [8] = ANSI.LIGHT_GREEN, [9] = ANSI.GREEN, [10] = ANSI.DARK_GREEN, [11] = ANSI.LIGHT_BLUE, [12] = ANSI.BLUE, [13] = ANSI.CYAN, [14] = ANSI.DARK_CYAN, [15] = ANSI.LIGHT_PURPLE, [16] = ANSI.PURPLE, [17] = ANSI.DARK_PURPLE, [18] = ANSI.LIGHT_MAGENTA, [19] = ANSI.MAGENTA, [20] = ANSI.DARK_MAGENTA, [21] = ANSI.LIGHT_PINK, [22] = ANSI.PINK, [23] = ANSI.DARK_PINK, [24] = ANSI.LIGHT_BROWN, [25] = ANSI.BROWN, [26] = ANSI.LIGHT_GREY, [27] = ANSI.GREY, [28] = ANSI.DARK_GREY, [29] = ANSI.WHITE}
+            chatList:divider("Chat Logging")
             local logChatEnabled = false
+            local team_chat_colour = 9
+            local global_chat_colour = 7
             local function onChatMessage(sender, reserved, text, team_chat, networked, is_auto)
                 if logChatEnabled then
                     local playerName = players.get_name(sender)
-                    local logColour = team_chat and ANSI.GREEN or ANSI.YELLOW
+                    local logColour = team_chat and chatColours[team_chat_colour] or chatColours[global_chat_colour]
                     local logChatMessage = $"{logColour}{playerName} [{(team_chat and "TEAM" or "ALL")}] {text}{ANSI.RESET}"
                     util.toast(logChatMessage, TOAST_CONSOLE)
                 end
             end
             chat.on_message(onChatMessage)
-            chatList:toggle("Log Chat To Console With Coloured Text", {}, "Logs all chat messages to the console with colored text. Green for team chat and yellow for all chat.", function(on)
+            chatList:toggle("Log To Console With Coloured Text", {}, "Logs all chat messages to the console with coloured text.", function(on)
                 if on and !menu.ref_by_path("Stand>Console", 53).value then
                     util.toast("Enabled Stand Console At 'Stand > Console'.")
                     menu.ref_by_path("Stand>Console", 53).value = true
                 end
                 logChatEnabled = on
+            end)
+            chatList:list_select("Global Chat Colour", {}, "Change the colour of global [All] chat messages.", {
+                {1, "Red"},{2, "Dark Red"},{3, "Dark Orange"},{4, "Orange"},{5, "Light Orange"},{6, "Gold"},{7, "Yellow"},{8, "Light Green"},{9, "Green"},{10, "Dark Green"},{11, "Light Blue"},{12, "Blue"},{13, "Cyan"},{14, "Dark Cyan"},{15, "Light Purple"},{16, "Purple"},{17, "Dark Purple"},{18, "Light Magenta"},{19, "Magenta"},{20, "Dark Magenta"},{21, "Light Pink"},{22, "Pink"},{23, "Dark Pink"},{24, "Light Brown"},{25, "Brown"},{26, "Light Grey"},{27, "Grey"},{28, "Dark Grey"},{29, "White"}
+            }, 7, function(value, menu_name)
+                global_chat_colour = value
+            end)
+            chatList:list_select("Team Chat Colour", {}, "Change the colour of team/org chat messages.", {
+                {1, "Red"},{2, "Dark Red"},{3, "Dark Orange"},{4, "Orange"},{5, "Light Orange"},{6, "Gold"},{7, "Yellow"},{8, "Light Green"},{9, "Green"},{10, "Dark Green"},{11, "Light Blue"},{12, "Blue"},{13, "Cyan"},{14, "Dark Cyan"},{15, "Light Purple"},{16, "Purple"},{17, "Dark Purple"},{18, "Light Magenta"},{19, "Magenta"},{20, "Dark Magenta"},{21, "Light Pink"},{22, "Pink"},{23, "Dark Pink"},{24, "Light Brown"},{25, "Brown"},{26, "Light Grey"},{27, "Grey"},{28, "Dark Grey"},{29, "White"}
+            }, 9, function(value, menu_name)
+                team_chat_colour = value
             end)
     local showspeakerson = online:toggle_loop("Show speakers", {"showspeakers"}, "Accurately shows who is talking in voice chat as soon as it happens. Better than vanilla. The speakers name will be shown in stands info overlay for easy visibility.", function()
         for players.list() as pid do
@@ -613,7 +630,7 @@ local scriptStartTime = util.current_time_millis()
             local playerName = players.get_name(players.user())
             menu.trigger_commands($"givesh {playerName}")
             util.toast("Becoming script host...")
-            util.yield_once()
+            util.yield()
         end
     end)
 
@@ -831,7 +848,7 @@ local scriptStartTime = util.current_time_millis()
             util.yield(250)
             util.trigger_script_event(1 << pid, {-1604421397, players.user(), 2, 0, 0, 0, 0, 0})
         end))
-        crashes_root:getChildren()[5]:attachAfter(menu.shadow_root():action("ScriptEvent v2 Crash", {"se2", "sc2", "script2"}, "Funny Scriptevent v2", function()
+        crashes_root:getChildren()[5]:attachAfter(menu.shadow_root():action("ScriptEvent v2 Crash", {}, "Funny Scriptevent v2", function()
             if pid == players.user() then return util.toast(lang.get_localised(-1974706693)) end
             menu.ref_by_rel_path(menu.player_root(pid), "Friendly>Give Script Host"):trigger()
             util.yield(1000)
@@ -863,7 +880,7 @@ local scriptStartTime = util.current_time_millis()
         end, function()
             SET_REMOTE_PLAYER_AS_GHOST(pid, false)
         end)
-
+        
     end
     players.add_command_hook(handlePlayerOptions)
 
@@ -896,7 +913,7 @@ X88x. ?8888k  8888X   ...ue888b   ...ue888b    :888ooo `888E          .    '*888
   ^-==""      `""                                       `Y"   888     ""       ""         "YP'    
                                                              J88"                                 
                                                              @%                                   
-                                                           :"                                     
+                                                           :"                                      
 ]]
     local function applyGradient(text, Lcolours)
         local lines = {}
