@@ -544,6 +544,7 @@ local ANSI = {
             gMsgHidden = commandBoxChat:action("Send a Global Message", {"globalmessage", "gmsg"}, "", function(click_type)
                 menu.show_command_box("gmsg "); end, function(input)
                 chat.send_message(input, false, true, true)
+                devLog($"Sent global message: {input}")
             end)
             tMsgHidden = commandBoxChat:action("Send a Team Message", {"teammessage", "tmsg"}, "", function(click_type)
                 menu.show_command_box("tmsg "); end, function(input)
@@ -733,40 +734,40 @@ local ANSI = {
 
 -----Mɪsᴄ Lɪsᴛ-----
     -----ʙᴀsᴇʙᴀʟʟBᴀᴛ+KɴɪғᴇLɪᴠᴇʀɪᴇs-----
-        local originalGunVanValues = {}     
-        local function setGlobalsForSpecialLiveries()
-            -- Sᴛᴏʀᴇ ᴛʜᴇ ᴏʀɪɢɪɴᴀʟ ᴠᴀʟᴜᴇs
-            originalGunVanValues[34329] = memory.read_int(memory.script_global(262145 + 34329))
-            originalGunVanValues[34330] = memory.read_int(memory.script_global(262145 + 34329 + 1))
-        
-            for i = 25, 75 do
-                originalGunVanValues[34331 + i] = memory.read_int(memory.script_global(262145 + 34331 + i))
-            end
-        
-            -- Sᴇᴛ ᴛʜᴇ ɴᴇᴡ ᴠᴀʟᴜᴇs (Cʀᴇᴅɪᴛ ᴛᴏ TᴏxɪᴋSᴋᴜʟʟ)
-            memory.write_int(memory.script_global(262145 + 34329), 2508868239) -- PLACES KNIFE AND BAT INTO GUN VAN USING THEIR HASHES
-            memory.write_int(memory.script_global(262145 + 34329 + 1), 2578778090)
-        
-            for i = 25, 75 do
-                memory.write_int(memory.script_global(262145 + 34331 + i), 0) -- ONE OF THESE ENABLES BAT & KNIFE LIVERIES LOL!
-            end
-        end
-        local function restoreOriginalSpecialLiveriesGlobals()
-            -- Rᴇsᴛᴏʀᴇ ᴛʜᴇ ᴏʀɪɢɪɴᴀʟ ᴠᴀʟᴜᴇs
-            memory.write_int(memory.script_global(262145 + 34329), originalGunVanValues[34329])
-            memory.write_int(memory.script_global(262145 + 34329 + 1), originalGunVanValues[34330])
-        
-            for i = 25, 75 do
-                memory.write_int(memory.script_global(262145 + 34331 + i), originalGunVanValues[34331 + i])
-            end
-        end
-        misc:toggle("Unlock Baseball Bat & Knife Liveries For Purchase In GunVan", {}, "Temporarily unlocks liveries. Enable Before Going Into Gun Van Weapon Menu!\n!!!MAKE SURE YOU TURN OPTION OFF WHEN FINISHED!!!", function(on)
-            if on then
-                setGlobalsForSpecialLiveries()
-            else
-                restoreOriginalSpecialLiveriesGlobals()
-            end
-        end)
+        --local originalGunVanValues = {}     
+        --local function setGlobalsForSpecialLiveries()
+        --    -- Sᴛᴏʀᴇ ᴛʜᴇ ᴏʀɪɢɪɴᴀʟ ᴠᴀʟᴜᴇs
+        --    originalGunVanValues[34329] = memory.read_int(memory.script_global(262145 + 34329))
+        --    originalGunVanValues[34330] = memory.read_int(memory.script_global(262145 + 34329 + 1))
+        --
+        --    for i = 25, 75 do
+        --        originalGunVanValues[34331 + i] = memory.read_int(memory.script_global(262145 + 34331 + i))
+        --    end
+        --
+        --    -- Sᴇᴛ ᴛʜᴇ ɴᴇᴡ ᴠᴀʟᴜᴇs (Cʀᴇᴅɪᴛ ᴛᴏ TᴏxɪᴋSᴋᴜʟʟ)
+        --    memory.write_int(memory.script_global(262145 + 34329), 2508868239) -- PLACES KNIFE AND BAT INTO GUN VAN USING THEIR HASHES
+        --    memory.write_int(memory.script_global(262145 + 34329 + 1), 2578778090)
+        --
+        --    for i = 25, 75 do
+        --        memory.write_int(memory.script_global(262145 + 34331 + i), 0) -- ONE OF THESE ENABLES BAT & KNIFE LIVERIES LOL!
+        --    end
+        --end
+        --local function restoreOriginalSpecialLiveriesGlobals()
+        --    -- Rᴇsᴛᴏʀᴇ ᴛʜᴇ ᴏʀɪɢɪɴᴀʟ ᴠᴀʟᴜᴇs
+        --    memory.write_int(memory.script_global(262145 + 34329), originalGunVanValues[34329])
+        --    memory.write_int(memory.script_global(262145 + 34329 + 1), originalGunVanValues[34330])
+        --
+        --    for i = 25, 75 do
+        --        memory.write_int(memory.script_global(262145 + 34331 + i), originalGunVanValues[34331 + i])
+        --    end
+        --end
+        --misc:toggle("Unlock Baseball Bat & Knife Liveries For Purchase In GunVan", {}, "Temporarily unlocks liveries. Enable Before Going Into Gun Van Weapon Menu!\n!!!MAKE SURE YOU TURN OPTION OFF WHEN FINISHED!!!", function(on)
+        --    if on then
+        --        setGlobalsForSpecialLiveries()
+        --    else
+        --        restoreOriginalSpecialLiveriesGlobals()
+        --    end
+        --end)
 
 -----DᴇᴠDʙɢ-----
     if devmode() then
