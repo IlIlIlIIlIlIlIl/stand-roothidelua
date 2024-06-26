@@ -157,7 +157,7 @@ local ANSI = {
     local online = menu.list(roothide_menu, "Online", {}, "")
     local world = menu.list(roothide_menu, "World", {}, "")
     --local game = menu.list(roothide_menu, "Game", {}, "")
-    local misc = menu.list(roothide_menu, "Misc", {}, "")
+    --local misc = menu.list(roothide_menu, "Misc", {}, "")
     roothide_menu:action("Check for Updates", {}, "The script will automatically check for updates at most daily, but you can manually check using this option anytime.", function()
         if async_http.have_access() then
             auto_update_config.check_interval = 0
