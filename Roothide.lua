@@ -442,7 +442,6 @@ local ANSI = {
                             util.yield(200)
                         end
                         for _, entity in pairs(canMigrateReset) do
-                            devLog($"Resetting can migrate for entity: {entity}")
                             entities.set_can_migrate(entity, true)
                         end
                         canMigrateReset = nil
@@ -544,7 +543,6 @@ local ANSI = {
             gMsgHidden = commandBoxChat:action("Send a Global Message", {"globalmessage", "gmsg"}, "", function(click_type)
                 menu.show_command_box("gmsg "); end, function(input)
                 chat.send_message(input, false, true, true)
-                devLog($"Sent global message: {input}")
             end)
             tMsgHidden = commandBoxChat:action("Send a Team Message", {"teammessage", "tmsg"}, "", function(click_type)
                 menu.show_command_box("tmsg "); end, function(input)
