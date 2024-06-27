@@ -14,7 +14,6 @@
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⠛⠛⠛⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ]]
 
-util.keep_running()
 util.require_natives("3095a", "g")
 local scriptStartTime = util.current_time_millis()
 
@@ -66,24 +65,24 @@ local scriptStartTime = util.current_time_millis()
     end
 
 -----Aᴜᴛᴏ Uᴘᴅᴀᴛᴇʀ​​​​​-----
-    util.ensure_package_is_installed("lua/auto-updater")
-    local auto_updater = require("auto-updater")
-    local auto_update_config = {
-        source_url="https://raw.githubusercontent.com/IlIlIlIIlIlIlIl/stand-roothidelua/main/Roothide.lua",
-        script_relpath=SCRIPT_RELPATH
-    }
-    if async_http.have_access() then
-        if !devmode() then
-            if auto_updater.run_auto_update(auto_update_config) then
-                util.toast("No updates found. You are already running the latest version.")
-            end
-        else
-            util.toast("[Roothide] - Dev Mode Enabled", TOAST_CONSOLE)
+util.ensure_package_is_installed("lua/auto-updater")
+local auto_updater = require("auto-updater")
+local auto_update_config = {
+    source_url="https://raw.githubusercontent.com/IlIlIlIIlIlIlIl/stand-roothidelua/main/Roothide.lua",
+    script_relpath=SCRIPT_RELPATH
+}
+if async_http.have_access() then
+    if !devmode() then
+        if auto_updater.run_auto_update(auto_update_config) then
+            util.toast("No updates found. You are already running the latest version.")
         end
-        luaStats(players.get_name(players.user()))
     else
-        aboveMapToastRequestTxr("This Script needs Internet Access for the Auto Updater to work! Please stop the script and uncheck the `Disable Internet Access` option.", "Roothide", "~u~Auto-Updater", 6, "CHAR_BLOCKED", "CHAR_BLOCKED")
+        util.toast("[Roothide] - Dev Mode Enabled", TOAST_CONSOLE)
     end
+    luaStats(players.get_name(players.user()))
+else
+    aboveMapToastRequestTxr("This Script needs Internet Access for the Auto Updater to work! Please stop the script and uncheck the `Disable Internet Access` option.", "Roothide", "~u~Auto-Updater", 6, "CHAR_BLOCKED", "CHAR_BLOCKED")
+end
 
 -----Mᴇɴᴜ Sᴇᴛᴜᴘ-----
 
@@ -832,3 +831,4 @@ X88x. ?8888k  8888X   ...ue888b   ...ue888b    :888ooo `888E          .    '*888
 ]]
 if !SCRIPT_SILENT_START then util.toast(textLogo, TOAST_CONSOLE) end
 if !SCRIPT_SILENT_START then util.toast($"[Roothide] - Script loaded in {(util.current_time_millis() - scriptStartTime)}ms", TOAST_CONSOLE) end
+util.keep_running() -- Kᴇᴇᴘ ᴛʜᴇ sᴄʀɪᴘᴛ ʀᴜɴɴɪɴɢ
