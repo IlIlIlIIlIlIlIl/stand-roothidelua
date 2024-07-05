@@ -16,6 +16,44 @@
 
 util.require_natives("3095a", "g")
 local scriptStartTime = util.current_time_millis()
+-----Eɴᴀʙʟᴇ Cᴏʟᴏᴜʀs Iɴ Cᴏɴsᴏʟᴇ​​​​​-----
+    util.ensure_package_is_installed("lua/luaffi")
+    local ffi = require "luaffi"
+    local kernel32 = ffi.open("kernel32")
+    $define STD_OUTPUT_HANDLE = -11
+    $define INVALID_HANDLE_VALUE = -1
+    $define ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x4
+    function colourConsole()
+        local hSTDOUT = kernel32:call("GetStdHandle", STD_OUTPUT_HANDLE)
+        if hSTDOUT != INVALID_HANDLE_VALUE then
+            local mode = memory.alloc_int()
+            if kernel32:call("GetConsoleMode", hSTDOUT, mode) != 0 then
+                kernel32:call("SetConsoleMode", hSTDOUT, memory.read_int(mode) | ENABLE_VIRTUAL_TERMINAL_PROCESSING)
+            end
+        end
+    end
+    colourConsole()
+    local consoleToggled = menu.ref_by_path("Stand>Console", 53).value
+    util.create_tick_handler(function() -- Tɪᴄᴋ Hᴀɴᴅʟᴇʀ ᴛᴏ ᴇɴᴀʙʟᴇ ᴄᴏʟᴏᴜʀs ᴡʜᴇɴ ᴄᴏɴsᴏʟᴇ ɪs ᴇɴᴀʙʟᴇᴅ
+        if menu.ref_by_path("Stand>Console", 53).value and !consoleToggled then
+            util.yield()
+            colourConsole()
+        end
+        consoleToggled = menu.ref_by_path("Stand>Console", 53).value
+    end)
+    -----Cᴏʟᴏᴜʀ Cᴏᴅᴇs----- https://talyian.github.io/ansicolors/    https://bixense.com/clicolors/
+        local ANSI = {
+        RED = "\27[38;5;196m", DARK_RED = "\27[38;5;52m", DARK_ORANGE = "\27[38;5;202m",
+        ORANGE = "\27[38;5;208m", LIGHT_ORANGE = "\27[38;5;214m", GOLD = "\27[38;5;220m",
+        YELLOW = "\27[38;5;226m", LIGHT_GREEN = "\27[38;5;154m", GREEN = "\27[38;5;46m",
+        DARK_GREEN = "\27[38;5;34m", LIGHT_BLUE = "\27[38;5;45m", BLUE = "\27[38;5;21m",
+        CYAN = "\27[38;5;51m", DARK_CYAN = "\27[38;5;30m", LIGHT_PURPLE = "\27[38;5;177m",
+        PURPLE = "\27[38;5;93m", DARK_PURPLE = "\27[38;5;55m", LIGHT_MAGENTA = "\27[38;5;213m",
+        MAGENTA = "\27[38;5;201m", DARK_MAGENTA = "\27[38;5;90m", LIGHT_PINK = "\27[38;5;218m",
+        PINK = "\27[38;5;205m", DARK_PINK = "\27[38;5;162m", LIGHT_BROWN = "\27[38;5;137m",
+        BROWN = "\27[38;5;94m", LIGHT_GREY = "\27[38;5;250m", GREY = "\27[38;5;244m",
+        DARK_GREY = "\27[38;5;236m", WHITE = "\27[38;5;15m", RESET = "\27[0m"
+        }
 
 -----𝑓ᴜɴᴄᴛɪᴏɴs​​​​​-----
     function devmode()
@@ -55,8 +93,34 @@ local scriptStartTime = util.current_time_millis()
         END_TEXT_COMMAND_THEFEED_POST_TICKER(true, false)
         SET_STREAMED_TEXTURE_DICT_AS_NO_LONGER_NEEDED(txrDictName)
     end
+    function loadAnimationDict(dict)
+        if !HAS_ANIM_DICT_LOADED(dict) then
+            REQUEST_ANIM_DICT(dict)
+            local startTime = os.clock()
+            while !HAS_ANIM_DICT_LOADED(dict) do
+                util.yield()
+                if os.clock() - startTime > 5000 / 1000 then
+                    util.toast($"Failed to load animation dictionary: {dict}")
+                    return false
+                end
+            end
+        end
+        return true
+    end
     function devLog(msg)
         if devmode() then util.toast(msg, TOAST_CONSOLE) end
+    end
+    function playerRefTrigger(pid, ref, value)
+        local menu_ref = menu.ref_by_rel_path(pid, ref)
+        if menu_ref:isValid() then
+            if value != nil then
+                menu_ref.value = value
+            else
+                menu_ref:trigger()
+            end
+        else
+            util.toast($"Ref is invalid!\nRef Found: {ref}", TOAST_DEFAULT | TOAST_CONSOLE)
+        end
     end
     local function luaStats(input)
         async_http.init("https://roothidelua.glitch.me", "/")
@@ -77,7 +141,7 @@ if async_http.have_access() then
             util.toast("No updates found. You are already running the latest version.")
         end
     else
-        util.toast("[Roothide] - Dev Mode Enabled", TOAST_CONSOLE)
+        util.toast($"{ANSI.YELLOW}[Roothide] \x1b[0;30;42mDev Mode Enabled{ANSI.RESET}", TOAST_CONSOLE)
     end
     luaStats(players.get_name(players.user()))
 else
@@ -287,10 +351,15 @@ end
         breakDoors:action("Delete Trunk", {"notrunk", "breaktrunk"}, "", function() if entities.get_user_vehicle_as_handle() != -1 then SET_VEHICLE_DOOR_BROKEN(entities.get_user_vehicle_as_handle(), 5, true) util.toast("Vehicle trunk deleted.") else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
         breakDoors:action("Delete Trunk2", {"notrunk2", "breaktrunk2"}, "", function() if entities.get_user_vehicle_as_handle() != -1 then SET_VEHICLE_DOOR_BROKEN(entities.get_user_vehicle_as_handle(), 6, true) util.toast("Trunk2 deleted.") else util.toast("Player is not in a vehicle or has no recent vehicle.") end end)
     vehicleOptions:toggle_loop("Engine Always On", {"alwayson"}, "Keeps the engine and lights running when you exit the vehicle.", function()
-        local vehicle = GET_VEHICLE_PED_IS_IN(players.user_ped(), false)
-        if DOES_ENTITY_EXIST(vehicle) then
+        local vehicle = entities.get_user_vehicle_as_handle()
+        if vehicle != -1 then
             SET_VEHICLE_ENGINE_ON(vehicle, true, true, true)
             SET_VEHICLE_LIGHTS(vehicle, 0)
+        end
+    end, function()
+        local vehicle = entities.get_user_vehicle_as_handle()
+        if vehicle != -1 and !IS_PED_IN_VEHICLE(players.user_ped(), vehicle, false) then
+            SET_VEHICLE_ENGINE_ON(vehicle, false, true, false)
         end
     end)
     local last_vehicle_with_radio_off = 0
@@ -382,8 +451,8 @@ end
                             end
                             for _, entity in pairs(allEntities) do
                                 local entityCoords = GET_ENTITY_COORDS(entity)
-                                local distance = VDIST(playerCoords.x, playerCoords.y, playerCoords.z, entityCoords.x, entityCoords.y, entityCoords.z)
-                                if distance <= 250.0 then
+                                local distance = VDIST2(playerCoords.x, playerCoords.y, playerCoords.z, entityCoords.x, entityCoords.y, entityCoords.z)
+                                if distance <= 62500.0 then
                                     table.insert(entitiesToControl, entity)
                                 end
                             end
@@ -439,7 +508,7 @@ end
             local disableChatInputAll = menu.ref_by_path("Game>Disables>Disable Game Inputs>MP_TEXT_CHAT_ALL", 53)
             local disableChatInputTeam = menu.ref_by_path("Game>Disables>Disable Game Inputs>MP_TEXT_CHAT_TEAM", 53)
             local showTyping
-            commandBoxChat:toggle_loop("Command Box Chat", {""}, "Use the command box to chat. Useful if chat is not opening when pressing 'T'. This option disables the in game chat box to fix crashing issues when co-loading cherax and typing in chat.", function()
+            commandBoxChat:toggle_loop("Command Box Chat", {""}, "Use the command box to chat. Useful if chat is not opening when pressing 'T'. This option disables the in game chat box to prevent crashing when co-loading cherax and typing in chat.", function()
                 disableChatInputAll.value = true
                 disableChatInputTeam.value = true
                 if !menu.command_box_is_open() then
@@ -510,6 +579,38 @@ end
             end)
             menu.set_visible(gMsgHidden, false)
             menu.set_visible(tMsgHidden, false)
+        -----ʟᴏɢCʜᴀᴛ-----
+            local chatColours = {[1] = ANSI.RED, [2] = ANSI.DARK_RED, [3] = ANSI.DARK_ORANGE, [4] = ANSI.ORANGE, [5] = ANSI.LIGHT_ORANGE, [6] = ANSI.GOLD, [7] = ANSI.YELLOW, [8] = ANSI.LIGHT_GREEN, [9] = ANSI.GREEN, [10] = ANSI.DARK_GREEN, [11] = ANSI.LIGHT_BLUE, [12] = ANSI.BLUE, [13] = ANSI.CYAN, [14] = ANSI.DARK_CYAN, [15] = ANSI.LIGHT_PURPLE, [16] = ANSI.PURPLE, [17] = ANSI.DARK_PURPLE, [18] = ANSI.LIGHT_MAGENTA, [19] = ANSI.MAGENTA, [20] = ANSI.DARK_MAGENTA, [21] = ANSI.LIGHT_PINK, [22] = ANSI.PINK, [23] = ANSI.DARK_PINK, [24] = ANSI.LIGHT_BROWN, [25] = ANSI.BROWN, [26] = ANSI.LIGHT_GREY, [27] = ANSI.GREY, [28] = ANSI.DARK_GREY, [29] = ANSI.WHITE}
+            chatList:divider("Chat Logging")
+            local logChatEnabled = false
+            local team_chat_colour = 9
+            local global_chat_colour = 7
+            local function onChatMessage(sender, reserved, text, team_chat, networked, is_auto)
+                if logChatEnabled then
+                    local playerName = players.get_name(sender)
+                    local logColour = team_chat and chatColours[team_chat_colour] or chatColours[global_chat_colour]
+                    local logChatMessage = $"{logColour}{playerName} [{(team_chat and "TEAM" or "ALL")}] {text}{ANSI.RESET}"
+                    util.toast(logChatMessage, TOAST_CONSOLE)
+                end
+            end
+            chat.on_message(onChatMessage)
+            chatList:toggle("Log To Console With Coloured Text", {}, "Logs all chat messages to the console with coloured text.", function(on)
+                if on and !menu.ref_by_path("Stand>Console", 53).value then
+                    util.toast("Enabled Stand Console At 'Stand > Console'.")
+                    menu.ref_by_path("Stand>Console", 53).value = true
+                end
+                logChatEnabled = on
+            end)
+            chatList:list_select("Global Chat Colour", {}, "Change the colour of global [All] chat messages.", {
+                {1, "Red"},{2, "Dark Red"},{3, "Dark Orange"},{4, "Orange"},{5, "Light Orange"},{6, "Gold"},{7, "Yellow"},{8, "Light Green"},{9, "Green"},{10, "Dark Green"},{11, "Light Blue"},{12, "Blue"},{13, "Cyan"},{14, "Dark Cyan"},{15, "Light Purple"},{16, "Purple"},{17, "Dark Purple"},{18, "Light Magenta"},{19, "Magenta"},{20, "Dark Magenta"},{21, "Light Pink"},{22, "Pink"},{23, "Dark Pink"},{24, "Light Brown"},{25, "Brown"},{26, "Light Grey"},{27, "Grey"},{28, "Dark Grey"},{29, "White"}
+            }, 7, function(value, menu_name)
+                global_chat_colour = value
+            end)
+            chatList:list_select("Team Chat Colour", {}, "Change the colour of team/org chat messages.", {
+                {1, "Red"},{2, "Dark Red"},{3, "Dark Orange"},{4, "Orange"},{5, "Light Orange"},{6, "Gold"},{7, "Yellow"},{8, "Light Green"},{9, "Green"},{10, "Dark Green"},{11, "Light Blue"},{12, "Blue"},{13, "Cyan"},{14, "Dark Cyan"},{15, "Light Purple"},{16, "Purple"},{17, "Dark Purple"},{18, "Light Magenta"},{19, "Magenta"},{20, "Dark Magenta"},{21, "Light Pink"},{22, "Pink"},{23, "Dark Pink"},{24, "Light Brown"},{25, "Brown"},{26, "Light Grey"},{27, "Grey"},{28, "Dark Grey"},{29, "White"}
+            }, 9, function(value, menu_name)
+                team_chat_colour = value
+            end)
     local showspeakerson = online:toggle_loop("Show speakers", {"showspeakers"}, "Accurately shows who is talking in voice chat as soon as it happens. Better than vanilla. The speakers name will be shown in stands info overlay for easy visibility.", function()
         for players.list() as pid do
             if NETWORK_IS_PLAYER_TALKING(pid) then
@@ -566,7 +667,7 @@ end
     traffic:toggle_loop("Delete Modded Population Multipliers", {""}, "Deletes modded population multiplier areas that stand misses.", function()
         standNoModPopRef = menu.ref_by_path("Online>Protections>Delete Modded Pop Multiplier Areas", 53)
         if !standNoModPopRef.value then standNoModPopRef.value = true end
-        for i = 0, 15 do
+        for i = -1, 100 do
             if DOES_POP_MULTIPLIER_AREA_EXIST(i) then
                 if IS_POP_MULTIPLIER_AREA_NETWORKED(i) then
                     util.toast($"Found a Modded Pop Multiplier Area with ID: {i}... Removing...")
@@ -599,7 +700,7 @@ end
                             util.yield()
                         end
                     end
-                    break
+                break
                 case 2:
                     for entities.get_all_vehicles_as_handles() as vehicle do    
 	    			local owner = entities.get_owner(vehicle)
@@ -609,25 +710,25 @@ end
                         end
                         util.yield()
                     end
-                    break
+                break
                 case 3:
                     for entities.get_all_objects_as_handles() as object do
                         entities.delete_by_handle(object)
                         counter += 1
                         util.yield()
                     end
-                    break
+                break
                 case 4:
                     for entities.get_all_pickups_as_handles() as pickup do
                         entities.delete_by_handle(pickup)
                         counter += 1
                         util.yield()
                     end
-                    break
+                break
                 case 5:
                     CLEAR_AREA_OF_PROJECTILES(players.get_position(players.user()), 1000.0, 0)
                     counter = "all"
-                    break
+                break
                 case 6:
                     for i = -1, 99 do
                         STOP_SOUND(i)
@@ -705,10 +806,10 @@ end
         debuglist:action("Log stand lang registered codes", {}, "", function()
             util.toast(lang.find_builtin("Movement"), TOAST_CONSOLE)
         end)
-        local libDir = $"{filesystem.scripts_dir()}lib\\roothide\\"
-            dofile($"{libDir}support.pluto")
-            dofile($"{libDir}dev.pluto")
+        require("lib.roothide.support")
+        require("lib.roothide.dev")
 
+        
     end
 
 -----Sʜᴀᴅᴏᴡ Rᴏᴏᴛ-----
@@ -717,17 +818,17 @@ end
         kickAll:action("Kick All", {"kickall"}, "Removes everyone that it can.", function()
             for _, pid in ipairs(players.list_except(true, false, false, false)) do -- Loop through all players except the user
                 if players.get_host() == players.user() then -- If the user is the session host
-                    menu.ref_by_rel_path(menu.player_root(pid), "Kick>Love Letter"):trigger() -- Kick the player using the "Love Letter" method
+                    playerRefTrigger(menu.player_root(pid), "Kick>Love Letter") -- Kick the player using the "Love Letter" method
                 else -- If the user is not the session host
                     if players.get_host() != pid then -- If the player is not the host
                         if !players.is_marked_as_modder(pid) then
-                            menu.ref_by_rel_path(menu.player_root(pid), "Kick>Smart"):trigger() -- If the player is not marked as a modder, kick using the "Smart" method
+                            playerRefTrigger(menu.player_root(pid), "Kick>Smart") -- If the player is not marked as a modder, kick using the "Smart" method
                         else
-                            menu.ref_by_rel_path(menu.player_root(pid), "Kick>Love Letter"):trigger() -- If the player is marked as a modder, kick using the "Love Letter" method
+                            playerRefTrigger(menu.player_root(pid), "Kick>Love Letter") -- If the player is marked as a modder, kick using the "Love Letter" method
                         end
                     else -- If the player is the host
                         if !players.is_marked_as_modder(pid) then -- If the host is not marked as a modder
-                            menu.ref_by_rel_path(menu.player_root(pid), "Kick>Smart"):trigger() -- Kick the host using the "Smart" method
+                            playerRefTrigger(menu.player_root(pid), "Kick>Smart") -- Kick the host using the "Smart" method
                         end
                     end
                 end
@@ -737,17 +838,17 @@ end
         kickAll:action("Kick All Strangers", {}, "Removes all players not added as a friend.", function()
             for _, pid in ipairs(players.list_except(true, true, false, false)) do -- Loop through all players except the user and friends
                 if players.get_host() == players.user() then -- If the user is the session host
-                    menu.ref_by_rel_path(menu.player_root(pid), "Kick>Love Letter"):trigger() -- Kick the player using the "Love Letter" method
+                    playerRefTrigger(menu.player_root(pid), "Kick>Love Letter") -- Kick the player using the "Love Letter" method
                 else -- If the user is not the session host
                     if players.get_host() != pid then -- If the player is not the host
                         if !players.is_marked_as_modder(pid) then
-                            menu.ref_by_rel_path(menu.player_root(pid), "Kick>Smart"):trigger() -- If the player is not marked as a modder, kick using the "Smart" method
+                            playerRefTrigger(menu.player_root(pid), "Kick>Smart") -- If the player is not marked as a modder, kick using the "Smart" method
                         else
-                            menu.ref_by_rel_path(menu.player_root(pid), "Kick>Love Letter"):trigger() -- If the player is marked as a modder, kick using the "Love Letter" method
+                            playerRefTrigger(menu.player_root(pid), "Kick>Love Letter") -- If the player is marked as a modder, kick using the "Love Letter" method
                         end
                     else -- If the player is the host
                         if !players.is_marked_as_modder(pid) then -- If the host is not marked as a modder
-                            menu.ref_by_rel_path(menu.player_root(pid), "Kick>Smart"):trigger() -- Kick the host using the "Smart" method
+                            playerRefTrigger(menu.player_root(pid), "Kick>Smart") -- Kick the host using the "Smart" method
                         end
                     end
                 end
@@ -763,12 +864,12 @@ end
         misc_list = player_menu:list("Misc")
         
         player_root:getChildren()[1]:attachBefore(menu.shadow_root():action("Spectate", {}, "Toggles 'Nuts Method' Spectate on the player.", function()
-            menu.ref_by_rel_path(menu.player_root(pid), "Spectate>Nuts Method"):trigger()
+            playerRefTrigger(menu.player_root(pid), "Spectate>Nuts Method")
         end))
 
         crashes_root:getChildren()[4]:attachAfter(menu.shadow_root():action("ScriptEvent Crash", {}, "Funny scriptevent", function()
             if pid == players.user() then return util.toast(lang.get_localised(-1974706693)) end
-            menu.ref_by_rel_path(menu.player_root(pid), "Friendly>Give Script Host"):trigger()
+            playerRefTrigger(menu.player_root(pid), "Friendly>Give Script Host")
             util.yield(1000)
             if players.get_script_host() != pid then return end
             util.trigger_script_event(1 << pid, {323285304, players.user(), 2147483647, 0, 0, 0, 2147483647, -1008861746})
@@ -777,7 +878,7 @@ end
         end))
         crashes_root:getChildren()[5]:attachAfter(menu.shadow_root():action("ScriptEvent v2 Crash", {}, "Funny Scriptevent v2", function()
             if pid == players.user() then return util.toast(lang.get_localised(-1974706693)) end
-            menu.ref_by_rel_path(menu.player_root(pid), "Friendly>Give Script Host"):trigger()
+            playerRefTrigger(menu.player_root(pid), "Friendly>Give Script Host")
             util.yield(1000)
             if players.get_script_host() != pid then return end
             util.trigger_script_event(1 << pid, {323285304, players.user(), -4640169, 0, 0, 0, -36565476, -53105203})
@@ -785,8 +886,8 @@ end
             util.trigger_script_event(1 << pid, {323285304, players.user(), 2147483647, 0, 0, 0, 2147483647, -1008861746})
         end))
 
-        misc_list:action("LoveLetterKick Quick Access Command", {"llk"}, "", function()
-            menu.ref_by_rel_path(menu.player_root(pid), "Kick>Love Letter"):trigger()
+        misc_list:action("LoveLetterKick Quick Access Command [llk player]", {"llk"}, "", function()
+            playerRefTrigger(menu.player_root(pid), "Kick>Love Letter")
         end)
         misc_list:action("Set Waypoint", {"swp"}, "", function()
             local pos = players.get_position(pid)
@@ -807,11 +908,25 @@ end
         end, function()
             SET_REMOTE_PLAYER_AS_GHOST(pid, false)
         end)
-        
+
+
     end
     players.add_command_hook(handlePlayerOptions)
 
 -----ᴄᴏɴsᴏʟᴇLᴏɢᴏ-----
+    local gradientColours = {
+        "\x1b[38;5;196m", -- Red
+        "\x1b[38;5;160m", -- Dark Red
+        "\x1b[38;5;202m", -- Dark Orange
+        "\x1b[38;5;208m", -- Orange
+        "\x1b[38;5;214m", -- Light Orange
+        "\x1b[38;5;220m", -- Gold
+        "\x1b[38;5;226m", -- Yellow
+        "\x1b[38;5;154m", -- Light Yellow
+        "\x1b[38;5;82m",  -- Light Green
+        "\x1b[38;5;46m",  -- Green
+        "\x1b[38;5;34m",  -- Dark Green
+    }
     local textLogo = [[ 
      ..      ...                                  s                   .       ..                  
   :~"8888x :"%888x                               :8      .uef^"      @88>   dF                    
@@ -829,6 +944,20 @@ X88x. ?8888k  8888X   ...ue888b   ...ue888b    :888ooo `888E          .    '*888
                                                              @%                                   
                                                            :"                                      
 ]]
-if !SCRIPT_SILENT_START then util.toast(textLogo, TOAST_CONSOLE) end
-if !SCRIPT_SILENT_START then util.toast($"[Roothide] - Script loaded in {(util.current_time_millis() - scriptStartTime)}ms", TOAST_CONSOLE) end
+local function applyGradient(text, Lcolours)
+    local lines = {}
+    for line in text:gmatch("[^\r\n]+") do
+        table.insert(lines, line)
+    end
+    local colouredText = $"{lines[1]}\n"
+    local colourCount = #Lcolours
+    local lineCount = #lines - 1
+    for i = 2, #lines do
+        local colourIndex = math.floor((i - 2) / (lineCount - 1) * (colourCount - 1)) + 1
+        colouredText = $"{colouredText}{Lcolours[colourIndex]}{lines[i]}{ANSI.RESET}\n"
+    end
+    return colouredText
+end
+if !SCRIPT_SILENT_START then util.toast(applyGradient(textLogo, gradientColours), TOAST_CONSOLE) end
+if !SCRIPT_SILENT_START then util.toast($"{ANSI.DARK_GREEN}[Roothide]{ANSI.RESET} Script loaded in {(util.current_time_millis() - scriptStartTime)}ms", TOAST_CONSOLE) end
 util.keep_running() -- Kᴇᴇᴘ ᴛʜᴇ sᴄʀɪᴘᴛ ʀᴜɴɴɪɴɢ
