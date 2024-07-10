@@ -93,19 +93,11 @@ local scriptStartTime = util.current_time_millis()
         END_TEXT_COMMAND_THEFEED_POST_TICKER(true, false)
         SET_STREAMED_TEXTURE_DICT_AS_NO_LONGER_NEEDED(txrDictName)
     end
-    function loadAnimationDict(dict)
-        if !HAS_ANIM_DICT_LOADED(dict) then
-            REQUEST_ANIM_DICT(dict)
-            local startTime = os.clock()
-            while !HAS_ANIM_DICT_LOADED(dict) do
-                util.yield()
-                if os.clock() - startTime > 5000 / 1000 then
-                    util.toast($"Failed to load animation dictionary: {dict}")
-                    return false
-                end
-            end
-        end
-        return true
+    function aboveMapToastNoTitle(msg, notificationColour)
+        notificationColour = notificationColour or 69 -- https://docs.fivem.net/docs/game-references/hud-colors/
+        THEFEED_SET_BACKGROUND_COLOR_FOR_NEXT_POST(notificationColour)
+        util.BEGIN_TEXT_COMMAND_THEFEED_POST(msg)
+        END_TEXT_COMMAND_THEFEED_POST_TICKER(true, false)
     end
     function devLog(msg)
         if devmode() then util.toast(msg, TOAST_CONSOLE) end
@@ -508,7 +500,7 @@ end
             local disableChatInputAll = menu.ref_by_path("Game>Disables>Disable Game Inputs>MP_TEXT_CHAT_ALL", 53)
             local disableChatInputTeam = menu.ref_by_path("Game>Disables>Disable Game Inputs>MP_TEXT_CHAT_TEAM", 53)
             local showTyping
-            commandBoxChat:toggle_loop("Command Box Chat", {""}, "Use the command box to chat. Useful if chat is not opening when pressing 'T'. This option disables the in game chat box to prevent crashing when co-loading cherax and typing in chat.", function()
+            commandBoxChat:toggle_loop("Command Box Chat", {"commandboxchat"}, "Use the command box to chat. Useful if chat is not opening when pressing 'T'. This option disables the in game chat box to prevent crashing when co-loading cherax and typing in chat.", function()
                 disableChatInputAll.value = true
                 disableChatInputTeam.value = true
                 if !menu.command_box_is_open() then
@@ -686,6 +678,11 @@ end
             CLEAR_AREA(1.1, 1.1, 1.1, 19999.9, true, false, false, true)
         else
             REMOVE_POP_MULTIPLIER_SPHERE(CTpop_multiplier_id, false);
+            for i = -1, 100 do
+                if DOES_POP_MULTIPLIER_AREA_EXIST(i) then
+                    REMOVE_POP_MULTIPLIER_AREA(i, true)
+                end
+            end
         end
     end)
     -----ᴄʟᴇᴀʀAʀᴇᴀOᴘᴛɪᴏɴs-----
@@ -815,7 +812,7 @@ end
 -----Sʜᴀᴅᴏᴡ Rᴏᴏᴛ-----
     -----ᴋɪᴄᴋAʟʟ-----
         local kickAll = menu.ref_by_path("Players>All Players", 53):getChildren()[1]:attachBefore(menu.shadow_root():list("Kick", {}, ""))
-        kickAll:action("Kick All", {"kickall"}, "Removes everyone that it can.", function()
+        kickAll:action("Kick All", {"kick"}, "Removes everyone that it can.", function()
             for _, pid in ipairs(players.list_except(true, false, false, false)) do -- Loop through all players except the user
                 if players.get_host() == players.user() then -- If the user is the session host
                     playerRefTrigger(menu.player_root(pid), "Kick>Love Letter") -- Kick the player using the "Love Letter" method
@@ -860,31 +857,31 @@ end
     local function handlePlayerOptions(pid)
         player_root = menu.player_root(pid)
         crashes_root = menu.ref_by_rel_path(menu.player_root(pid), "Crash")
+        kicks_root = menu.ref_by_rel_path(menu.player_root(pid), "Kick")
         player_menu = player_root:list("Roothide")
         misc_list = player_menu:list("Misc")
         
         player_root:getChildren()[1]:attachBefore(menu.shadow_root():action("Spectate", {}, "Toggles 'Nuts Method' Spectate on the player.", function()
             playerRefTrigger(menu.player_root(pid), "Spectate>Nuts Method")
         end))
-
-        crashes_root:getChildren()[4]:attachAfter(menu.shadow_root():action("ScriptEvent Crash", {}, "Funny scriptevent", function()
-            if pid == players.user() then return util.toast(lang.get_localised(-1974706693)) end
-            playerRefTrigger(menu.player_root(pid), "Friendly>Give Script Host")
-            util.yield(1000)
-            if players.get_script_host() != pid then return end
-            util.trigger_script_event(1 << pid, {323285304, players.user(), 2147483647, 0, 0, 0, 2147483647, -1008861746})
-            util.yield(250)
-            util.trigger_script_event(1 << pid, {-1604421397, players.user(), 2, 0, 0, 0, 0, 0})
-        end))
-        crashes_root:getChildren()[5]:attachAfter(menu.shadow_root():action("ScriptEvent v2 Crash", {}, "Funny Scriptevent v2", function()
-            if pid == players.user() then return util.toast(lang.get_localised(-1974706693)) end
-            playerRefTrigger(menu.player_root(pid), "Friendly>Give Script Host")
-            util.yield(1000)
-            if players.get_script_host() != pid then return end
-            util.trigger_script_event(1 << pid, {323285304, players.user(), -4640169, 0, 0, 0, -36565476, -53105203})
-            util.yield(250)
-            util.trigger_script_event(1 << pid, {323285304, players.user(), 2147483647, 0, 0, 0, 2147483647, -1008861746})
-        end))
+        kicks_root:action("Block Join Kick", {"bjk"}, "Kicks the player and then blocks their join in player history.", function()
+            if pid == players.user() then
+                util.toast(lang.get_localised(-1974706693))
+                return
+            end
+            local player = players.get_name(pid)
+            menu.trigger_commands($"historyblock{player} on")
+            aboveMapToastNoTitle($"Enabled block join for {player}. :)", 135)
+            if players.get_host() == players.user() then
+                playerRefTrigger(menu.player_root(pid), "Kick>Love Letter")
+            else
+                if players.is_marked_as_modder(pid) then
+                    playerRefTrigger(menu.player_root(pid), "Kick>Love Letter")
+                else
+                    playerRefTrigger(menu.player_root(pid), "Kick>Smart")
+                end
+            end
+        end)
 
         misc_list:action("LoveLetterKick Quick Access Command [llk player]", {"llk"}, "", function()
             playerRefTrigger(menu.player_root(pid), "Kick>Love Letter")
