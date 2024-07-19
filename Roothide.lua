@@ -705,6 +705,13 @@ local scriptStartTime = util.current_time_millis()
         end
     end)
     showspeakerson.value = true
+    online:toggle_loop("Typing Notifications", {}, "Displays a notification when someone in the session is typing a message.", function()
+        for players.list(false) as pid do
+            if players.is_typing(pid) then
+                util.toast($"{players.get_name(pid)} is typing...")
+            end
+        end
+    end)
     online:toggle("AFK Safe Session", {"afk"}, "Create a tutorial session inside current session that other players cannot join giving you a safe space to go afk.", function(on)
         if on then
             NETWORK_START_SOLO_TUTORIAL_SESSION()
