@@ -16,45 +16,6 @@
 
 util.require_natives("3095a", "g")
 local scriptStartTime = util.current_time_millis()
------Eɴᴀʙʟᴇ Cᴏʟᴏᴜʀs Iɴ Cᴏɴsᴏʟᴇ​​​​​-----
-    util.ensure_package_is_installed("lua/luaffi")
-    local ffi = require "luaffi"
-    local kernel32 = ffi.open("kernel32")
-    $define STD_OUTPUT_HANDLE = -11
-    $define INVALID_HANDLE_VALUE = -1
-    $define ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x4
-    function colourConsole()
-        local hSTDOUT = kernel32:call("GetStdHandle", STD_OUTPUT_HANDLE)
-        if hSTDOUT != INVALID_HANDLE_VALUE then
-            local mode = memory.alloc_int()
-            if kernel32:call("GetConsoleMode", hSTDOUT, mode) != 0 then
-                kernel32:call("SetConsoleMode", hSTDOUT, memory.read_int(mode) | ENABLE_VIRTUAL_TERMINAL_PROCESSING)
-            end
-        end
-    end
-    colourConsole()
-    local consoleToggled = menu.ref_by_path("Stand>Console", 53).value
-    util.create_tick_handler(function() -- Tɪᴄᴋ Hᴀɴᴅʟᴇʀ ᴛᴏ ᴇɴᴀʙʟᴇ ᴄᴏʟᴏᴜʀs ᴡʜᴇɴ ᴄᴏɴsᴏʟᴇ ɪs ᴇɴᴀʙʟᴇᴅ
-        if menu.ref_by_path("Stand>Console", 53).value and !consoleToggled then
-            util.yield()
-            colourConsole()
-        end
-        consoleToggled = menu.ref_by_path("Stand>Console", 53).value
-    end)
-    -----Cᴏʟᴏᴜʀ Cᴏᴅᴇs----- https://talyian.github.io/ansicolors/    https://bixense.com/clicolors/
-        local ANSI = {
-        RED = "\27[38;5;196m", DARK_RED = "\27[38;5;52m", DARK_ORANGE = "\27[38;5;202m",
-        ORANGE = "\27[38;5;208m", LIGHT_ORANGE = "\27[38;5;214m", GOLD = "\27[38;5;220m",
-        YELLOW = "\27[38;5;226m", LIGHT_GREEN = "\27[38;5;154m", GREEN = "\27[38;5;46m",
-        DARK_GREEN = "\27[38;5;34m", LIGHT_BLUE = "\27[38;5;45m", BLUE = "\27[38;5;21m",
-        CYAN = "\27[38;5;51m", DARK_CYAN = "\27[38;5;30m", LIGHT_PURPLE = "\27[38;5;177m",
-        PURPLE = "\27[38;5;93m", DARK_PURPLE = "\27[38;5;55m", LIGHT_MAGENTA = "\27[38;5;213m",
-        MAGENTA = "\27[38;5;201m", DARK_MAGENTA = "\27[38;5;90m", LIGHT_PINK = "\27[38;5;218m",
-        PINK = "\27[38;5;205m", DARK_PINK = "\27[38;5;162m", LIGHT_BROWN = "\27[38;5;137m",
-        BROWN = "\27[38;5;94m", LIGHT_GREY = "\27[38;5;250m", GREY = "\27[38;5;244m",
-        DARK_GREY = "\27[38;5;236m", WHITE = "\27[38;5;15m", RESET = "\27[0m"
-        }
-
 -----𝑓ᴜɴᴄᴛɪᴏɴs​​​​​-----
     function devmode()
         local developer = {0x0EE24B30, 0xF1FC04D, 0xF2475BB}
@@ -114,6 +75,39 @@ local scriptStartTime = util.current_time_millis()
             util.toast($"Ref is invalid!\nRef Found: {ref}", TOAST_DEFAULT | TOAST_CONSOLE)
         end
     end
+    local function loadAnimationDict(dict)
+        if !HAS_ANIM_DICT_LOADED(dict) then
+            REQUEST_ANIM_DICT(dict)
+            local startTime = os.clock()
+            while !HAS_ANIM_DICT_LOADED(dict) do
+                util.yield()
+                if os.clock() - startTime > 5000 / 1000 then
+                    util.toast($"Failed to load animation dictionary: {dict}")
+                    return false
+                end
+            end
+        end
+        return true
+    end
+    local function loadModel(model)
+        hash = util.joaat(model)
+        if !IS_MODEL_VALID(hash) then
+            util.toast($"Invalid model: {model}", TOAST_DEFAULT | TOAST_CONSOLE)
+            return false
+        end
+        if !HAS_MODEL_LOADED(hash) then
+            REQUEST_MODEL(hash)
+            local startTime = os.clock()
+            while not HAS_MODEL_LOADED(hash) do
+                util.yield()
+                if os.clock() - startTime > 5000 / 1000 then
+                    util.toast($"Failed to load model: {model}")
+                    return false
+                end
+            end
+        end
+        return true
+    end
     local function luaStats(input)
         async_http.init("https://roothidelua.glitch.me", "/")
         async_http.set_post("application/json", string.format('{"input": "%s"}', input))
@@ -121,24 +115,62 @@ local scriptStartTime = util.current_time_millis()
     end
 
 -----Aᴜᴛᴏ Uᴘᴅᴀᴛᴇʀ​​​​​-----
-util.ensure_package_is_installed("lua/auto-updater")
-local auto_updater = require("auto-updater")
-local auto_update_config = {
-    source_url="https://raw.githubusercontent.com/IlIlIlIIlIlIlIl/stand-roothidelua/main/Roothide.lua",
-    script_relpath=SCRIPT_RELPATH
-}
-if async_http.have_access() then
-    if !devmode() then
-        if auto_updater.run_auto_update(auto_update_config) then
-            util.toast("No updates found. You are already running the latest version.")
+    util.ensure_package_is_installed("lua/auto-updater")
+    local auto_updater = require("auto-updater")
+    local auto_update_config = {
+        source_url="https://raw.githubusercontent.com/IlIlIlIIlIlIlIl/stand-roothidelua/main/Roothide.lua",
+        script_relpath=SCRIPT_RELPATH
+    }
+    if async_http.have_access() then
+        if !devmode() then
+            if auto_updater.run_auto_update(auto_update_config) then
+                util.toast("No updates found. You are already running the latest version.")
+            end
+        else
+            aboveMapToastNoTitle("[Roothide] Dev Mode Enabled")
         end
+        luaStats(players.get_name(players.user()))
     else
-        util.toast($"{ANSI.YELLOW}[Roothide] \x1b[0;30;42mDev Mode Enabled{ANSI.RESET}", TOAST_CONSOLE)
+        aboveMapToastRequestTxr("This Script needs Internet Access for the Auto Updater to work! Please stop the script and uncheck the `Disable Internet Access` option.", "Roothide", "~u~Auto-Updater", 6, "CHAR_BLOCKED", "CHAR_BLOCKED")
     end
-    luaStats(players.get_name(players.user()))
-else
-    aboveMapToastRequestTxr("This Script needs Internet Access for the Auto Updater to work! Please stop the script and uncheck the `Disable Internet Access` option.", "Roothide", "~u~Auto-Updater", 6, "CHAR_BLOCKED", "CHAR_BLOCKED")
-end
+-----Eɴᴀʙʟᴇ Cᴏʟᴏᴜʀs Iɴ Cᴏɴsᴏʟᴇ​​​​​-----
+    util.ensure_package_is_installed("lua/luaffi")
+    local ffi = require "luaffi"
+    local kernel32 = ffi.open("kernel32")
+    $define STD_OUTPUT_HANDLE = -11
+    $define INVALID_HANDLE_VALUE = -1
+    $define ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x4
+    function colourConsole()
+        local hSTDOUT = kernel32:call("GetStdHandle", STD_OUTPUT_HANDLE)
+        if hSTDOUT != INVALID_HANDLE_VALUE then
+            local mode = memory.alloc_int()
+            if kernel32:call("GetConsoleMode", hSTDOUT, mode) != 0 then
+                kernel32:call("SetConsoleMode", hSTDOUT, memory.read_int(mode) | ENABLE_VIRTUAL_TERMINAL_PROCESSING)
+            end
+        end
+    end
+    colourConsole()
+    local consoleToggled = menu.ref_by_path("Stand>Console", 53).value
+    util.create_tick_handler(function() -- Tɪᴄᴋ Hᴀɴᴅʟᴇʀ ᴛᴏ ᴇɴᴀʙʟᴇ ᴄᴏʟᴏᴜʀs ᴡʜᴇɴ ᴄᴏɴsᴏʟᴇ ɪs ᴇɴᴀʙʟᴇᴅ
+        if menu.ref_by_path("Stand>Console", 53).value and !consoleToggled then
+            util.yield()
+            colourConsole()
+        end
+        consoleToggled = menu.ref_by_path("Stand>Console", 53).value
+    end)
+-----Cᴏʟᴏᴜʀ Cᴏᴅᴇs----- https://talyian.github.io/ansicolors/    https://bixense.com/clicolors/
+    local ANSI = {
+    RED = "\27[38;5;196m", DARK_RED = "\27[38;5;52m", DARK_ORANGE = "\27[38;5;202m",
+    ORANGE = "\27[38;5;208m", LIGHT_ORANGE = "\27[38;5;214m", GOLD = "\27[38;5;220m",
+    YELLOW = "\27[38;5;226m", LIGHT_GREEN = "\27[38;5;154m", GREEN = "\27[38;5;46m",
+    DARK_GREEN = "\27[38;5;34m", LIGHT_BLUE = "\27[38;5;45m", BLUE = "\27[38;5;21m",
+    CYAN = "\27[38;5;51m", DARK_CYAN = "\27[38;5;30m", LIGHT_PURPLE = "\27[38;5;177m",
+    PURPLE = "\27[38;5;93m", DARK_PURPLE = "\27[38;5;55m", LIGHT_MAGENTA = "\27[38;5;213m",
+    MAGENTA = "\27[38;5;201m", DARK_MAGENTA = "\27[38;5;90m", LIGHT_PINK = "\27[38;5;218m",
+    PINK = "\27[38;5;205m", DARK_PINK = "\27[38;5;162m", LIGHT_BROWN = "\27[38;5;137m",
+    BROWN = "\27[38;5;94m", LIGHT_GREY = "\27[38;5;250m", GREY = "\27[38;5;244m",
+    DARK_GREY = "\27[38;5;236m", WHITE = "\27[38;5;15m", RESET = "\27[0m"
+    }
 
 -----Mᴇɴᴜ Sᴇᴛᴜᴘ-----
 
@@ -189,6 +221,7 @@ end
 -----Cʜɪʟᴅ Lɪsᴛs-----
     -----Sᴇʟғ Lɪsᴛ-----
         local weapons = selfList:list("Weapons")
+        local paintGun = weapons:list("Paint Gun", {}, "Local only. Shoot paint instead of bullets.")
         local ragdollOptions = selfList:list("Ragdoll Options")
     -----Vᴇʜɪᴄʟᴇ Oᴘᴛɪᴏɴs Lɪsᴛ---​​​​--
         local seatSwitcher = vehicleOptions:list("Switch Seat", {"switchseat", "seatswitch"})
@@ -249,6 +282,67 @@ end
                     zoomOut_pressed_value = false
                 end
             end)
+        -----paintgun-----
+            local paintDecals = {
+                {1030, "Paint Splatter"},
+                {1050, "Water Hydrant Splatter"},
+                {4010, "Bullet on Metal"},
+                {4020, "Bullet on Concrete"},
+                {4030, "Bullet on Mattress"},
+                {4032, "Bullet on Mud"},
+                {4050, "Bullet on Wood"},
+                {4053, "Bullet on Sand"},
+                {4040, "Bullet on Cardboard"},
+                {4100, "Shattered Glass"},
+                {4102, "Bloody Glass"},
+                {4104, "Bloody Glass 2"},
+                {4200, "Shotgun Blast on Paper"},
+                {4310, "Melee on Concrete"},
+                {4312, "Melee on Wood"},
+                {4314, "Melee on Metal"},
+                {4421, "Burn Mark"},
+                {5000, "Concrete Explosion"},
+                {5004, "Bullet Impact"},
+                {5031, "Shattered Glass 2"},
+                {9000, "Water Puddle"},
+                {9050, "Rectangle"}
+            }
+            local paintColour = {r = 255, g = 0, b = 255, a = 1.0}
+            local paintDecal = 1030
+            local paintScale = 0.5
+            local coordsPTG = nil
+            paintGun:toggle_loop("Paint Gun", {"paintgun"}, "Shoots paint instead of bullets. Works best with rapid fire enabled.\nNote: Other players won't see it & doesn't work on walls.", function()
+                coordsPTG = memory.alloc()
+                SET_DECAL_BULLET_IMPACT_RANGE_SCALE(0.0)
+                if coordsPTG and coordsPTG != 0 then
+                    if GET_PED_LAST_WEAPON_IMPACT_COORD(players.user_ped(), coordsPTG) then
+                        if memory.read_float(coordsPTG) != 0.0 then
+                            local coords = v3.new(coordsPTG)
+                            ADD_DECAL(paintDecal, coords.x, coords.y, coords.z, 0, 0, -1, 0, 1.0, 0.0, paintScale, paintScale - 0.1, paintColour.r / 255, paintColour.g / 255, paintColour.b / 255, 1, -1, true, false, false)
+                            REMOVE_PARTICLE_FX_IN_RANGE(coords.x, coords.y, coords.z, 1.0)
+                        end
+                    end
+                end
+            end, function()
+                SET_DECAL_BULLET_IMPACT_RANGE_SCALE(1.0)
+                coordsPTG = nil
+            end)
+            paintGun:action("Clear Paint", {"clearpaint"}, "Clear All Paint.", function()
+                REMOVE_DECALS_IN_RANGE(0.0, 0.0, 0.0, 10000.0)
+            end)
+            paintGun:divider("Options")
+            paintGun:colour("Paint Colour", {}, "Change the colour of the paint.", paintColour.r / 255, paintColour.g / 255, paintColour.b / 255, 1.0, false, function(colour)
+                paintColour = {r = colour.r * 255, g = colour.g * 255, b = colour.b * 255}
+            end):rainbow()
+            paintGun:list_select("Paint Type", {}, "", paintDecals, 1030, function(value)
+                paintDecal = value
+            end)
+            paintGun:slider_float("Paint Scale", {"paintscale"}, "Adjust the size of the paint splatter.", 5, 1000, paintScale * 10, 1, function(value)
+                paintScale = value / 10.0
+            end)
+
+
+
     -----ʀᴀɢᴅᴏʟʟOᴘᴛɪᴏɴs-----
         local ragdollKey = 0x51 -- Default key is 'Q'
         local ragdollType = 0
@@ -864,7 +958,7 @@ end
         player_root:getChildren()[1]:attachBefore(menu.shadow_root():action("Spectate", {}, "Toggles 'Nuts Method' Spectate on the player.", function()
             playerRefTrigger(menu.player_root(pid), "Spectate>Nuts Method")
         end))
-        kicks_root:action("Block Join Kick", {"bjk"}, "Kicks the player and then blocks their join in player history.", function()
+        kicks_root:action("Block Join Kick", {"bjk"}, "Kicks the player and blocks their join in player history.", function()
             if pid == players.user() then
                 util.toast(lang.get_localised(-1974706693))
                 return
@@ -872,6 +966,7 @@ end
             local player = players.get_name(pid)
             menu.trigger_commands($"historyblock{player} on")
             aboveMapToastNoTitle($"Enabled block join for {player}. :)", 135)
+            util.toast($"{ANSI.MAGENTA}Enabled block join for {player}. :){ANSI.RESET}", TOAST_CONSOLE)
             if players.get_host() == players.user() then
                 playerRefTrigger(menu.player_root(pid), "Kick>Love Letter")
             else
