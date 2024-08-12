@@ -1,30 +1,33 @@
-rhPedList = {
+rhPlayableChars = {
+    "Player_One",
+    "Player_Two",
+    "Player_Zero",
+    "MP_M_Freemode_01",
+    "MP_F_Freemode_01"
+}
+
+rhGAnimals = {
+    "IG_Orleans",
+    "CS_Orleans",
     "A_C_Boar",
     "A_C_Boar_02",
     "A_C_Cat_01",
-    "A_C_Chickenhawk",
     "A_C_Chimp",
     "A_C_Chimp_02",
     "A_C_Chop",
     "A_C_Chop_02",
-    "A_C_Cormorant",
     "A_C_Cow",
     "A_C_Coyote",
     "A_C_Coyote_02",
-    "A_C_Crow",
     "A_C_Deer",
     "A_C_Deer_02",
-    "A_C_Dolphin",
-    "A_C_Fish",
+    "A_C_shepherd",
     "A_C_Hen",
-    "A_C_HumpBack",
     "A_C_Husky",
-    "A_C_KillerWhale",
     "A_C_MtLion",
     "A_C_MtLion_02",
     "A_C_Panther",
     "A_C_Pig",
-    "A_C_Pigeon",
     "A_C_Poodle",
     "A_C_Pug",
     "A_C_Pug_02",
@@ -34,12 +37,28 @@ rhPedList = {
     "A_C_Retriever",
     "A_C_Rhesus",
     "A_C_Rottweiler",
-    "A_C_Seagull",
+    "A_C_Westy"
+}
+
+rhWAnimals = {
+    "A_C_Dolphin",
+    "A_C_Fish",
     "A_C_SharkHammer",
-    "A_C_SharkTiger",
-    "A_C_shepherd",
+    "A_C_HumpBack",
+    "A_C_KillerWhale",
     "A_C_Stingray",
-    "A_C_Westy",
+    "A_C_SharkTiger"
+}
+
+rhFAnimals = {
+    "A_C_Cormorant",
+    "A_C_Chickenhawk",
+    "A_C_Crow",
+    "A_C_Pigeon",
+    "A_C_Seagull"
+}
+
+rhNPCs = {
     "A_F_M_Beach_01",
     "A_F_M_BevHills_01",
     "A_F_M_BevHills_02",
@@ -327,7 +346,6 @@ rhPedList = {
     "CS_Old_Man1A",
     "CS_Old_Man2",
     "CS_Omega",
-    "CS_Orleans",
     "CS_Paper",
     "CS_Patricia",
     "CS_Patricia_02",
@@ -708,7 +726,6 @@ rhPedList = {
     "IG_OldRichGuy",
     "IG_Omega",
     "IG_ONeil",
-    "IG_Orleans",
     "IG_Ortega",
     "IG_Paige",
     "IG_Paper",
@@ -783,7 +800,6 @@ rhPedList = {
     "MP_F_ExecPA_01",
     "MP_F_ExecPA_02",
     "MP_F_Forgery_01",
-    "MP_F_Freemode_01",
     "MP_F_HeliStaff_01",
     "MP_F_Meth_01",
     "MP_F_Misty_01",
@@ -802,7 +818,6 @@ rhPedList = {
     "MP_M_FamDD_01",
     "MP_M_FIBSec_01",
     "MP_M_Forgery_01",
-    "MP_M_Freemode_01",
     "MP_M_G_VagFun_01",
     "MP_M_Marston_01",
     "MP_M_Meth_01",
@@ -815,9 +830,6 @@ rhPedList = {
     "MP_M_Weed_01",
     "MP_S_M_Armoured_01",
     "P_Franklin_02",
-    "Player_One",
-    "Player_Two",
-    "Player_Zero",
     "S_F_M_Autoshop_01",
     "S_F_M_Fembarber",
     "S_F_M_Maid_01",
