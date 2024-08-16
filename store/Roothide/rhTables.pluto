@@ -41,21 +41,21 @@ rhGAnimals = {
 }
 
 rhWAnimals = {
-    "A_C_Dolphin",
-    "A_C_Fish",
-    "A_C_SharkHammer",
-    "A_C_HumpBack",
-    "A_C_KillerWhale",
-    "A_C_Stingray",
-    "A_C_SharkTiger"
+    { id = "A_C_Dolphin", name = "Dolphin" },
+    { id = "A_C_Fish", name = "Fish" },
+    { id = "A_C_SharkHammer", name = "Hammerhead Shark" },
+    { id = "A_C_HumpBack", name = "Humpback Whale" },
+    { id = "A_C_KillerWhale", name = "Killer Whale (Orca)" },
+    { id = "A_C_Stingray", name = "Stingray" },
+    { id = "A_C_SharkTiger", name = "Tiger Shark" }
 }
 
 rhFAnimals = {
-    "A_C_Cormorant",
-    "A_C_Chickenhawk",
-    "A_C_Crow",
-    "A_C_Pigeon",
-    "A_C_Seagull"
+    { id = "A_C_Cormorant", name = "Cormorant" },
+    { id = "A_C_Chickenhawk", name = "Chickenhawk" },
+    { id = "A_C_Crow", name = "Crow" },
+    { id = "A_C_Pigeon", name = "Pigeon" },
+    { id = "A_C_Seagull", name = "Seagull" }
 }
 
 rhNPCs = {
