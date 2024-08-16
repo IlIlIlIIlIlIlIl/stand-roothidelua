@@ -72,11 +72,10 @@ local auto_updater = require("auto-updater")
 local auto_update_config = {
     source_url="https://raw.githubusercontent.com/IlIlIlIIlIlIlIl/stand-roothidelua/main/Roothide.lua",
     script_relpath=SCRIPT_RELPATH,
-    dependencies = {
-        { 
-            source_url = "https://raw.githubusercontent.com/IlIlIlIIlIlIlIl/stand-roothidelua/main/store/Roothide/rhTables.pluto", 
-            script_relpath = "store/Roothide/rhTables.pluto"
-        }
+    project_url="https://github.com/IlIlIlIIlIlIlIl/stand-roothidelua",
+    branch="main",
+    dependencies={
+        "store/Roothide/rhTables.pluto",
     }
 }
 if async_http.have_access() then
