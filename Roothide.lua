@@ -13,52 +13,94 @@
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⣧⠹⠦⠃⣾⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⠛⠛⠛⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ]]
-
-util.require_natives("3095a", "g")
 local scriptStartTime = util.current_time_millis()
+local nativeRequireStartTime = util.current_time_millis()
+util.require_natives("3274a.g")
+local nativeRequireEndTime = util.current_time_millis() - nativeRequireStartTime
+AMT_id = 0
+function cleanupAboveMapToasts()
+    if AMT_id != 0 then
+        THEFEED_REMOVE_ITEM(AMT_id)
+    end
+end
+function aboveMapToast(msg, title, subject, notificationColour, txrDictName, txrName)
+    title = title or "Roothide"
+    subject = subject or ""
+    txrDictName = txrDictName or "CHAR_MP_FM_CONTACT"
+    txrName = txrName or "CHAR_MP_FM_CONTACT"  --! https://wiki.rage.mp/index.php?title=Notification_Pictures
+    notificationColour = notificationColour or 69 --! https://docs.fivem.net/docs/game-references/hud-colors/
+    THEFEED_SET_BACKGROUND_COLOR_FOR_NEXT_POST(notificationColour)
+    util.BEGIN_TEXT_COMMAND_THEFEED_POST(msg)
+    AMT_id = END_TEXT_COMMAND_THEFEED_POST_MESSAGETEXT(txrDictName, txrName, true, 1, title, subject)
+    END_TEXT_COMMAND_THEFEED_POST_TICKER(true, false)
+end
+function aboveMapToastRequestTxr(msg, title, subject, notificationColour, txrDictName, txrName)
+    title = title or "Roothide"
+    subject = subject or ""
+    txrDictName = txrDictName or "CHAR_MP_FM_CONTACT"
+    txrName = txrName or "CHAR_MP_FM_CONTACT"  --! https://wiki.rage.mp/index.php?title=Notification_Pictures
+    notificationColour = notificationColour or 69 --! https://docs.fivem.net/docs/game-references/hud-colors/
+    THEFEED_SET_BACKGROUND_COLOR_FOR_NEXT_POST(notificationColour)
+    REQUEST_STREAMED_TEXTURE_DICT(txrDictName, false)
+    while not HAS_STREAMED_TEXTURE_DICT_LOADED(txrDictName) do
+        util.yield()
+    end
+    util.BEGIN_TEXT_COMMAND_THEFEED_POST(msg)
+    AMT_id = END_TEXT_COMMAND_THEFEED_POST_MESSAGETEXT(txrDictName, txrName, true, 1, title, subject)
+    END_TEXT_COMMAND_THEFEED_POST_TICKER(true, false)
+    SET_STREAMED_TEXTURE_DICT_AS_NO_LONGER_NEEDED(txrDictName)
+end
+function aboveMapToastNoTitle(msg, notificationColour)
+    notificationColour = notificationColour or 69 --! https://docs.fivem.net/docs/game-references/hud-colors/
+    THEFEED_SET_BACKGROUND_COLOR_FOR_NEXT_POST(notificationColour)
+    util.BEGIN_TEXT_COMMAND_THEFEED_POST(msg)
+    AMT_id = END_TEXT_COMMAND_THEFEED_POST_TICKER(true, false)
+end
+local function luaStats(input)
+    async_http.init("https://roothidelua.glitch.me", "/")
+    async_http.set_post("application/json", string.format('{"input": "%s"}', input))
+    async_http.dispatch()
+end
+util.ensure_package_is_installed("lua/auto-updater")
+local auto_updater = require("auto-updater")
+local auto_update_config = {
+    source_url="https://raw.githubusercontent.com/IlIlIlIIlIlIlIl/stand-roothidelua/main/Roothide.lua",
+    script_relpath=SCRIPT_RELPATH,
+    dependencies = {
+        { 
+            source_url = "https://raw.githubusercontent.com/IlIlIlIIlIlIlIl/stand-roothidelua/main/store/Roothide/rhTables.pluto", 
+            script_relpath = "store/Roothide/rhTables.pluto"
+        }
+    }
+}
+if async_http.have_access() then
+    if !devmode() then
+        if auto_updater.run_auto_update(auto_update_config) then
+            util.toast("No updates found. You are already running the latest version.")
+        end
+    else
+        aboveMapToastNoTitle("[Roothide] Dev Mode Enabled")
+    end
+    luaStats(players.get_name(players.user()))
+else
+    aboveMapToastRequestTxr("This Script needs Internet Access for the Auto Updater to work! Please stop the script and uncheck the 'Disable Internet Access' option.", "Roothide", "~u~Auto-Updater", 6, "CHAR_BLOCKED", "CHAR_BLOCKED")
+end
+local rhDir = $"{filesystem.scripts_dir()}Roothide\\"
+local rhStoreDir = $"{filesystem.store_dir()}Roothide\\"
+if !filesystem.is_dir(rhDir) then filesystem.mkdirs(rhDir) end
+if !filesystem.is_dir(rhStoreDir) then filesystem.mkdirs(rhStoreDir) end
+if !filesystem.exists($"{filesystem.store_dir()}Roothide\\rhTables.pluto") then
+    util.toast("Required file is missing. Please ensure 'rhTables.pluto' is located in the 'Roothide' directory within the store folder. (Lua Scripts/store/Roothide/rhTables.pluto)", TOAST_ALL)
+    util.stop_script()
+else
+    require("store.roothide.rhTables")
+end
 -----𝑓ᴜɴᴄᴛɪᴏɴs​​​​​-----
     function devmode()
         local developer = {0x0EE24B30, 0xF1FC04D, 0xF2475BB}
         local user = players.get_rockstar_id(players.user())
-        for developer as id do
-            if user == id then
-                return true
-            end
-        end
+        for developer as id do if user == id then return true end end
         return false
-    end
-    function aboveMapToast(msg, title, subject, notificationColour, txrDictName, txrName)
-        title = title or "Roothide"
-        subject = subject or ""
-        txrDictName = txrDictName or "CHAR_MP_FM_CONTACT"
-        txrName = txrName or "CHAR_MP_FM_CONTACT"  -- https://wiki.rage.mp/index.php?title=Notification_Pictures
-        notificationColour = notificationColour or 69 -- https://docs.fivem.net/docs/game-references/hud-colors/
-        THEFEED_SET_BACKGROUND_COLOR_FOR_NEXT_POST(notificationColour)
-        util.BEGIN_TEXT_COMMAND_THEFEED_POST(msg)
-        END_TEXT_COMMAND_THEFEED_POST_MESSAGETEXT(txrDictName, txrName, true, 1, title, subject)
-        END_TEXT_COMMAND_THEFEED_POST_TICKER(true, false)
-    end
-    function aboveMapToastRequestTxr(msg, title, subject, notificationColour, txrDictName, txrName)
-        title = title or "Roothide"
-        subject = subject or ""
-        txrDictName = txrDictName or "CHAR_MP_FM_CONTACT"
-        txrName = txrName or "CHAR_MP_FM_CONTACT"  -- https://wiki.rage.mp/index.php?title=Notification_Pictures
-        notificationColour = notificationColour or 69 -- https://docs.fivem.net/docs/game-references/hud-colors/
-        THEFEED_SET_BACKGROUND_COLOR_FOR_NEXT_POST(notificationColour)
-        REQUEST_STREAMED_TEXTURE_DICT(txrDictName, false)
-        while not HAS_STREAMED_TEXTURE_DICT_LOADED(txrDictName) do
-            util.yield()
-        end
-        util.BEGIN_TEXT_COMMAND_THEFEED_POST(msg)
-        END_TEXT_COMMAND_THEFEED_POST_MESSAGETEXT(txrDictName, txrName, true, 1, title, subject)
-        END_TEXT_COMMAND_THEFEED_POST_TICKER(true, false)
-        SET_STREAMED_TEXTURE_DICT_AS_NO_LONGER_NEEDED(txrDictName)
-    end
-    function aboveMapToastNoTitle(msg, notificationColour)
-        notificationColour = notificationColour or 69 -- https://docs.fivem.net/docs/game-references/hud-colors/
-        THEFEED_SET_BACKGROUND_COLOR_FOR_NEXT_POST(notificationColour)
-        util.BEGIN_TEXT_COMMAND_THEFEED_POST(msg)
-        END_TEXT_COMMAND_THEFEED_POST_TICKER(true, false)
     end
     function devLog(msg)
         if devmode() then util.toast(msg, TOAST_CONSOLE) end
@@ -89,50 +131,21 @@ local scriptStartTime = util.current_time_millis()
         end
         return true
     end
-    local function loadModel(model)
-        hash = util.joaat(model)
-        if !IS_MODEL_VALID(hash) then
-            util.toast($"Invalid model: {model}", TOAST_DEFAULT | TOAST_CONSOLE)
-            return false
+    local function getOffsetFromCam(distance)
+        if type(distance) != "table" then
+            distance = {x=distance, y=distance, z=distance}
         end
-        if !HAS_MODEL_LOADED(hash) then
-            REQUEST_MODEL(hash)
-            local startTime = os.clock()
-            while not HAS_MODEL_LOADED(hash) do
-                util.yield()
-                if os.clock() - startTime > 5000 / 1000 then
-                    util.toast($"Failed to load model: {model}")
-                    return false
-                end
-            end
-        end
-        return true
-    end
-    local function luaStats(input)
-        async_http.init("https://roothidelua.glitch.me", "/")
-        async_http.set_post("application/json", string.format('{"input": "%s"}', input))
-        async_http.dispatch()
+        local camRot = GET_FINAL_RENDERED_CAM_ROT(2)
+        local camPos = GET_FINAL_RENDERED_CAM_COORD()
+        local direction = v3.toDir(camRot)
+        local destination = {
+            x = camPos.x + (direction.x * distance.x),
+            y = camPos.y + (direction.y * distance.y),
+            z = camPos.z + (direction.z * distance.z)
+        }
+        return destination
     end
 
------Aᴜᴛᴏ Uᴘᴅᴀᴛᴇʀ​​​​​-----
-    util.ensure_package_is_installed("lua/auto-updater")
-    local auto_updater = require("auto-updater")
-    local auto_update_config = {
-        source_url="https://raw.githubusercontent.com/IlIlIlIIlIlIlIl/stand-roothidelua/main/Roothide.lua",
-        script_relpath=SCRIPT_RELPATH
-    }
-    if async_http.have_access() then
-        if !devmode() then
-            if auto_updater.run_auto_update(auto_update_config) then
-                util.toast("No updates found. You are already running the latest version.")
-            end
-        else
-            aboveMapToastNoTitle("[Roothide] Dev Mode Enabled")
-        end
-        luaStats(players.get_name(players.user()))
-    else
-        aboveMapToastRequestTxr("This Script needs Internet Access for the Auto Updater to work! Please stop the script and uncheck the `Disable Internet Access` option.", "Roothide", "~u~Auto-Updater", 6, "CHAR_BLOCKED", "CHAR_BLOCKED")
-    end
 -----Eɴᴀʙʟᴇ Cᴏʟᴏᴜʀs Iɴ Cᴏɴsᴏʟᴇ​​​​​-----
     util.ensure_package_is_installed("lua/luaffi")
     local ffi = require "luaffi"
@@ -150,37 +163,23 @@ local scriptStartTime = util.current_time_millis()
         end
     end
     colourConsole()
-    local consoleToggled = menu.ref_by_path("Stand>Console", 53).value
-    util.create_tick_handler(function() -- Tɪᴄᴋ Hᴀɴᴅʟᴇʀ ᴛᴏ ᴇɴᴀʙʟᴇ ᴄᴏʟᴏᴜʀs ᴡʜᴇɴ ᴄᴏɴsᴏʟᴇ ɪs ᴇɴᴀʙʟᴇᴅ
-        if menu.ref_by_path("Stand>Console", 53).value and !consoleToggled then
+    local consoleToggled = menu.ref_by_path("Stand>Console", 55).value
+    util.create_tick_handler(function() --! Tɪᴄᴋ Hᴀɴᴅʟᴇʀ ᴛᴏ ᴇɴᴀʙʟᴇ ᴄᴏʟᴏᴜʀs ᴡʜᴇɴ ᴄᴏɴsᴏʟᴇ ɪs ᴇɴᴀʙʟᴇᴅ
+        if menu.ref_by_path("Stand>Console", 55).value and !consoleToggled then
             util.yield()
             colourConsole()
         end
-        consoleToggled = menu.ref_by_path("Stand>Console", 53).value
+        consoleToggled = menu.ref_by_path("Stand>Console", 55).value
     end)
------Cᴏʟᴏᴜʀ Cᴏᴅᴇs----- https://talyian.github.io/ansicolors/    https://bixense.com/clicolors/
-    local ANSI = {
-    RED = "\27[38;5;196m", DARK_RED = "\27[38;5;52m", DARK_ORANGE = "\27[38;5;202m",
-    ORANGE = "\27[38;5;208m", LIGHT_ORANGE = "\27[38;5;214m", GOLD = "\27[38;5;220m",
-    YELLOW = "\27[38;5;226m", LIGHT_GREEN = "\27[38;5;154m", GREEN = "\27[38;5;46m",
-    DARK_GREEN = "\27[38;5;34m", LIGHT_BLUE = "\27[38;5;45m", BLUE = "\27[38;5;21m",
-    CYAN = "\27[38;5;51m", DARK_CYAN = "\27[38;5;30m", LIGHT_PURPLE = "\27[38;5;177m",
-    PURPLE = "\27[38;5;93m", DARK_PURPLE = "\27[38;5;55m", LIGHT_MAGENTA = "\27[38;5;213m",
-    MAGENTA = "\27[38;5;201m", DARK_MAGENTA = "\27[38;5;90m", LIGHT_PINK = "\27[38;5;218m",
-    PINK = "\27[38;5;205m", DARK_PINK = "\27[38;5;162m", LIGHT_BROWN = "\27[38;5;137m",
-    BROWN = "\27[38;5;94m", LIGHT_GREY = "\27[38;5;250m", GREY = "\27[38;5;244m",
-    DARK_GREY = "\27[38;5;236m", WHITE = "\27[38;5;15m", RESET = "\27[0m"
-    }
 
 -----Mᴇɴᴜ Sᴇᴛᴜᴘ-----
-
-    local roothide_menu = menu.attach_before(menu.ref_by_path("Stand>Settings", 53), menu.list(menu.shadow_root(), "Roothide", {"roothidescript"}, "Roothide Script"))
+    local roothide_menu = menu.attach_before(menu.ref_by_path("Stand>Settings", 55), menu.list(menu.shadow_root(), "Roothide", {"roothidescript"}, "Roothide Script"))
     roothide_menu:action("Stop Script", {}, "Stop the script.", function()
-        menu.focus(menu.ref_by_path($"Stand>Lua Scripts>{SCRIPT_NAME}>Stop Script", 53))
+        menu.focus(menu.ref_by_path($"Stand>Lua Scripts>{SCRIPT_NAME}>Stop Script", 55))
         util.stop_script()
     end)
     menu.action(menu.my_root(), "Go To Script Menu", {}, "Go to the scripts main menu", function()
-        menu.ref_by_path("Stand>Roothide", 53):trigger()
+        menu.ref_by_path("Stand>Roothide", 55):trigger()
     end)
     menu.action(menu.my_root(), "Check for Updates", {}, "The script will automatically check for updates at most daily, but you can manually check using this option anytime.", function()
         if async_http.have_access() then
@@ -190,16 +189,15 @@ local scriptStartTime = util.current_time_millis()
                 util.toast("No updates found. You are already running the latest version.")
             end
         else
-            aboveMapToastRequestTxr("This Script needs Internet Access for the Auto Updater to work! Please stop the script and uncheck the `Disable Internet Access` option.", "Roothide", "~u~Auto-Updater", 6, "CHAR_BLOCKED", "CHAR_BLOCKED")
+            aboveMapToastRequestTxr("This Script needs Internet Access for the Auto Updater to work! Please stop the script and uncheck the 'Disable Internet Access' option.", "Roothide", "~u~Auto-Updater", 6, "CHAR_BLOCKED", "CHAR_BLOCKED")
         end
     end)
     if SCRIPT_MANUAL_START then
-        menu.ref_by_path("Stand>Roothide", 53):trigger()
+        menu.ref_by_path("Stand>Roothide", 55):trigger()
         PLAY_SOUND_FRONTEND(-1, "SPAWN", "BARRY_01_SOUNDSET", true)
     end
 
 -----Mᴇɴᴜ Rᴏᴏᴛ-----
-
     local selfList = menu.list(roothide_menu, "Self", {}, "")
     local vehicleOptions = menu.list(roothide_menu, "Vehicle", {}, "")
     local online = menu.list(roothide_menu, "Online", {}, "")
@@ -214,14 +212,14 @@ local scriptStartTime = util.current_time_millis()
                 util.toast("No updates found. You are already running the latest version.")
             end
         else
-            aboveMapToastRequestTxr("This Script needs Internet Access for the Auto Updater to work! Please stop the script and uncheck the `Disable Internet Access` option.", "Roothide", "~u~Auto-Updater", 6, "CHAR_BLOCKED", "CHAR_BLOCKED")
+            aboveMapToastRequestTxr("This Script needs Internet Access for the Auto Updater to work! Please stop the script and uncheck the 'Disable Internet Access' option.", "Roothide", "~u~Auto-Updater", 6, "CHAR_BLOCKED", "CHAR_BLOCKED")
         end
     end)
 
 -----Cʜɪʟᴅ Lɪsᴛs-----
     -----Sᴇʟғ Lɪsᴛ-----
         local weapons = selfList:list("Weapons")
-        local paintGun = weapons:list("Paint Gun", {}, "Local only. Shoot paint instead of bullets.")
+        local paintGun = weapons:list("Paint Gun", {}, "Shoot paint instead of bullets.")
         local ragdollOptions = selfList:list("Ragdoll Options")
     -----Vᴇʜɪᴄʟᴇ Oᴘᴛɪᴏɴs Lɪsᴛ---​​​​--
         local seatSwitcher = vehicleOptions:list("Switch Seat", {"switchseat", "seatswitch"})
@@ -230,16 +228,17 @@ local scriptStartTime = util.current_time_millis()
         local protections = online:list("Protections",{"rhprotections"})
         local chatList = online:list("Chat Options")
     -----Wᴏʀʟᴅ Lɪsᴛ​​​​​​​​​-----
-        local traffic = world:list("Traffic")    
+        local traffic = world:list("Traffic")
+        local rqControlSettings = world:list("Entity Control")
         local clearAreaOptions = world:list("Clear Area Options")
 
 -----Sᴇʟғ Lɪsᴛ-----
     -----ᴡᴇᴀᴘᴏɴs-----
         -----sɴɪᴘᴇʀZᴏᴏᴍ-----
             local sniper_hashes = {
-                100416529,  -- Sɴɪᴘᴇʀ Rɪғʟᴇ
-                205991906,  -- Hᴇᴀᴠʏ Sɴɪᴘᴇʀ
-                177293209   -- Hᴇᴀᴠʏ Sɴɪᴘᴇʀ MK2
+                100416529,  --! Sɴɪᴘᴇʀ Rɪғʟᴇ
+                205991906,  --! Hᴇᴀᴠʏ Sɴɪᴘᴇʀ
+                177293209   --! Hᴇᴀᴠʏ Sɴɪᴘᴇʀ MK2
             }
             local function is_sniper_weapon(weapon_hash)
                 for _, hash in ipairs(sniper_hashes) do
@@ -253,11 +252,11 @@ local scriptStartTime = util.current_time_millis()
             weapons:toggle_loop("Instant Sniper Zoom", {}, "Sets your sniper rifle zoom level to maximum when scoping in.", function()
                 if is_sniper_weapon(GET_SELECTED_PED_WEAPON(players.user_ped())) then
                     if IS_AIM_CAM_ACTIVE() then
-                        if IS_CONTROL_JUST_PRESSED(2, 43) then -- INPUT_SNIPER_ZOOM_OUT_SECONDARY
+                        if IS_CONTROL_JUST_PRESSED(2, 43) then --! INPUT_SNIPER_ZOOM_OUT_SECONDARY
                             zoomOut_pressed_value = true
                         end
                         if !zoomOut_pressed_value then
-                            SET_FIRST_PERSON_AIM_CAM_ZOOM_FACTOR(6.0) -- Sᴇᴛ ᴛʜᴇ ᴢᴏᴏᴍ ʟᴇᴠᴇʟ ᴛᴏ ᴍᴀxɪᴍᴜᴍ
+                            SET_FIRST_PERSON_AIM_CAM_ZOOM_FACTOR(6.0) --! Sᴇᴛ ᴛʜᴇ ᴢᴏᴏᴍ ʟᴇᴠᴇʟ ᴛᴏ ᴍᴀxɪᴍᴜᴍ
                         end
                     else
                         zoomOut_pressed_value = false
@@ -269,11 +268,11 @@ local scriptStartTime = util.current_time_millis()
             weapons:toggle_loop("Sniper Auto Zoom", {}, "Automatically zooms in when scoping in with sniper rifles.", function()
                 if is_sniper_weapon(GET_SELECTED_PED_WEAPON(players.user_ped())) then
                     if IS_AIM_CAM_ACTIVE() then
-                        if IS_CONTROL_JUST_PRESSED(2, 43) then -- INPUT_SNIPER_ZOOM_OUT_SECONDARY
+                        if IS_CONTROL_JUST_PRESSED(2, 43) then --! INPUT_SNIPER_ZOOM_OUT_SECONDARY
                             zoomOut_pressed_value = true
                         end
                         if !zoomOut_pressed_value then
-                            SET_CONTROL_VALUE_NEXT_FRAME(2, 42, 1.0)  -- Sɪᴍᴜʟᴀᴛᴇ ʜᴏʟᴅɪɴɢ ᴛʜᴇ ᴋᴇʏ ᴛᴏ ᴢᴏᴏᴍ ɪɴ
+                            SET_CONTROL_VALUE_NEXT_FRAME(2, 42, 1.0)  --! Sɪᴍᴜʟᴀᴛᴇ ʜᴏʟᴅɪɴɢ ᴛʜᴇ ᴋᴇʏ ᴛᴏ ᴢᴏᴏᴍ ɪɴ
                         end
                     else
                         zoomOut_pressed_value = false
@@ -283,35 +282,11 @@ local scriptStartTime = util.current_time_millis()
                 end
             end)
         -----paintgun-----
-            local paintDecals = {
-                {1030, "Paint Splatter"},
-                {1050, "Water Hydrant Splatter"},
-                {4010, "Bullet on Metal"},
-                {4020, "Bullet on Concrete"},
-                {4030, "Bullet on Mattress"},
-                {4032, "Bullet on Mud"},
-                {4050, "Bullet on Wood"},
-                {4053, "Bullet on Sand"},
-                {4040, "Bullet on Cardboard"},
-                {4100, "Shattered Glass"},
-                {4102, "Bloody Glass"},
-                {4104, "Bloody Glass 2"},
-                {4200, "Shotgun Blast on Paper"},
-                {4310, "Melee on Concrete"},
-                {4312, "Melee on Wood"},
-                {4314, "Melee on Metal"},
-                {4421, "Burn Mark"},
-                {5000, "Concrete Explosion"},
-                {5004, "Bullet Impact"},
-                {5031, "Shattered Glass 2"},
-                {9000, "Water Puddle"},
-                {9050, "Rectangle"}
-            }
             local paintColour = {r = 255, g = 0, b = 255, a = 1.0}
             local paintDecal = 1030
             local paintScale = 0.5
             local coordsPTG = nil
-            paintGun:toggle_loop("Paint Gun", {"paintgun"}, "Shoots paint instead of bullets. Works best with rapid fire enabled.\nNote: Other players won't see it & doesn't work on walls.", function()
+            paintGun:toggle_loop("Paint Gun", {"paintgun"}, "Local only! Shoots paint instead of bullets. Works best with rapid fire enabled.\nNote: Other players won't see it & doesn't work on walls.", function()
                 coordsPTG = memory.alloc()
                 SET_DECAL_BULLET_IMPACT_RANGE_SCALE(0.0)
                 if coordsPTG and coordsPTG != 0 then
@@ -341,22 +316,20 @@ local scriptStartTime = util.current_time_millis()
                 paintScale = value / 10.0
             end)
 
-
-
     -----ʀᴀɢᴅᴏʟʟOᴘᴛɪᴏɴs-----
-        local ragdollKey = 0x51 -- Default key is 'Q'
+        local ragdollKey = 0x51 --! Default key is 'Q'
         local ragdollType = 0
         local playerIsRagdoll = false
         ragdollOptions:toggle_loop("Quick Stand", {}, "Allows you to get up faster when knocked down.", function()
             SET_PED_CONFIG_FLAG(players.user_ped(), 227, IS_PLAYER_PLAYING(players.user())) end, function() SET_PED_CONFIG_FLAG(players.user_ped(), 227, false)
         end)
-        ragdollOptions:toggle("[Stand] Clumsiness", {}, "Toggles the 'Clumsiness' option in Stand's Self tab, making your character more prone to tripping and falling.", function(on)
-            menu.ref_by_path("Self>Clumsiness").value = on
+        ragdollOptions:toggle("Clumsiness [Shortcut]", {}, "Toggles the 'Clumsiness' option in Stand's Self tab, making your character more prone to tripping and falling.", function(toggle)
+            menu.ref_by_path("Self>Clumsiness").value = toggle
         end)
         ragdollOptions:toggle_loop("Stay Down", {}, "Prevents you from getting back up after being ragdolled.", function()
             if menu.ref_by_path("Self>Gracefulness").value then
                 util.toast("Pro Tip: Don't enable Gracefulness and Stay Down simultaneously. ;)")
-                menu.ref_by_path("Stand>Roothide>Self>Ragdoll Options>Stay Down", 53).value = false
+                menu.ref_by_path("Stand>Roothide>Self>Ragdoll Options>Stay Down", 55).value = false
             end
             if IS_PED_RAGDOLL(players.user_ped()) then
                 playerIsRagdoll = true
@@ -369,17 +342,17 @@ local scriptStartTime = util.current_time_millis()
         ragdollOptions:toggle_loop("Ragdoll Toggle", {"ragdolltoggle"}, "Hold the specified key to make your character ragdoll and release to recover.", function()
             if menu.ref_by_path("Self>Gracefulness").value then
                 util.toast("Pro Tip: Don't enable Gracefulness and Ragdoll Toggle simultaneously. ;)")
-                menu.ref_by_path("Stand>Roothide>Self>Ragdoll Options>Ragdoll Toggle", 53).value = false
+                menu.ref_by_path("Stand>Roothide>Self>Ragdoll Options>Ragdoll Toggle", 55).value = false
             end
             if !menu.command_box_is_open() and !IS_MP_TEXT_CHAT_TYPING() and !IS_SYSTEM_UI_BEING_DISPLAYED() and util.is_key_down(ragdollKey) then
                 SET_PED_TO_RAGDOLL(players.user_ped(), 750, 750, ragdollType, false, false, false)
             end
             if ragdollKey == 0xA2 then
-                menu.ref_by_path("Game>Disables>Disable Game Inputs>DUCK", 53).value = true
+                menu.ref_by_path("Game>Disables>Disable Game Inputs>DUCK", 55).value = true
             else
-                menu.ref_by_path("Game>Disables>Disable Game Inputs>DUCK", 53).value = false
+                menu.ref_by_path("Game>Disables>Disable Game Inputs>DUCK", 55).value = false
             end
-        end, function() menu.ref_by_path("Game>Disables>Disable Game Inputs>DUCK", 53).value = false end)
+        end, function() menu.ref_by_path("Game>Disables>Disable Game Inputs>DUCK", 55).value = false end)
         ragdollOptions:list_select("Ragdoll Toggle Key", {}, "Change the key used for Ragdoll Toggle.", {
             {0x51, "Q"},{0x45, "E"},{0x52, "R"},{0x58, "X"},{0xA2, "Left Control"}}, 0x51, function(value, menu_name)
             ragdollKey = value
@@ -483,9 +456,9 @@ local scriptStartTime = util.current_time_millis()
         local function vehicle_path_to_stand_ref(path)
             local vehiclesDir = $"{filesystem.stand_dir()}Vehicles\\"
             local relativePath = path:sub(#vehiclesDir + 1, -5):gsub("\\", ">")
-            return menu.ref_by_path($"Vehicle>Garage>{relativePath}", 53)
+            return menu.ref_by_path($"Vehicle>Garage>{relativePath}", 55)
         end
-        vehicleOptions:action("Random Stand Garage Vehicle", {"randomvehicle", "rv"}, "Selects a random vehicle from your Stand garage and highlights it in the menu.", function()
+        vehicleOptions:action("Random Stand Garage Vehicle", {"rv", "randomvehicle"}, "Selects a random vehicle from your Stand garage and highlights it in the menu.", function()
             local vehiclesDir = $"{filesystem.stand_dir()}Vehicles"
             local allVehicles = get_all_vehicles(vehiclesDir)
             if #allVehicles == 0 then
@@ -496,90 +469,23 @@ local scriptStartTime = util.current_time_millis()
             local ref = vehicle_path_to_stand_ref(randomVehicle)
             menu.focus(ref)
         end)
+    -----RandomPersonalVehicle-----
+        vehicleOptions:action("Random Personal Vehicle", {"rpv", "randompersonalvehicle"}, "Selects a random vehicle from your in-game owned vehicles and highlights it in the menu.", function()
+            if !util.is_session_started() or util.is_session_transition_active() then
+                util.toast(lang.get_localised(280744635))
+                return
+            end
+            local personalVehicles = menu.ref_by_path("Vehicle>Personal Vehicles", 55):getChildren()
+            if #personalVehicles <= 4 then
+                util.toast("No personal vehicles available to select.")
+                return
+            end
+            local random = math.random(5, #personalVehicles)
+            menu.focus(personalVehicles[random])
+        end)
 
 -----Oɴʟɪɴᴇ Lɪsᴛ-----
     -----Pʀᴏᴛᴇᴄᴛɪᴏɴs-----
-        -----EɴᴛɪᴛʏCᴏɴᴛʀᴏʟ-----
-            local rqControlSettings = protections:list("Entity Control")
-            local rqControlActive = false
-            local rqControlPeds = true
-            local rqControlVehicles = true
-            local rqControlObjects = true
-            local rqControlCanMigrate = false
-            rqControlSettings:toggle("Control Entities", {"controlallentities"}, "Continuously attempts to gain control of entities within a 250 meter range. Excludes vehicles being driven by players. \n(Not Recommended)", function(on)
-                if on then
-                    rqControlActive = true
-                    util.create_thread(function() 
-                        local canMigrateReset = {}
-                        while rqControlActive do
-                            local playerCoords = GET_ENTITY_COORDS(players.user_ped())
-                            local entitiesToControl = {}
-                            local allEntities = {}
-                            if rqControlPeds then
-                                for _, ped in pairs(entities.get_all_peds_as_handles()) do
-                                    if !IS_PED_A_PLAYER(ped) then
-                                        table.insert(allEntities, ped)
-                                    end
-                                end
-                            end
-                            if rqControlVehicles then
-                                for _, vehicle in pairs(entities.get_all_vehicles_as_handles()) do
-                                    local driverPed = GET_PED_IN_VEHICLE_SEAT(vehicle, -1)
-                                    if driverPed == 0 or !IS_PED_A_PLAYER(driverPed) then
-                                        table.insert(allEntities, vehicle)
-                                    end
-                                end
-                            end
-                            if rqControlObjects then
-                                for _, object in pairs(entities.get_all_objects_as_handles()) do
-                                    table.insert(allEntities, object)
-                                end
-                            end
-                            for _, entity in pairs(allEntities) do
-                                local entityCoords = GET_ENTITY_COORDS(entity)
-                                local distance = VDIST2(playerCoords.x, playerCoords.y, playerCoords.z, entityCoords.x, entityCoords.y, entityCoords.z)
-                                if distance <= 62500.0 then
-                                    table.insert(entitiesToControl, entity)
-                                end
-                            end
-                            for _, entity in pairs(entitiesToControl) do
-                                if !NETWORK_HAS_CONTROL_OF_ENTITY(entity) then
-                                    NETWORK_REQUEST_CONTROL_OF_ENTITY(entity)
-                                    util.yield(10)
-                                end
-                                if rqControlCanMigrate and NETWORK_HAS_CONTROL_OF_ENTITY(entity) and entities.get_can_migrate(entity) then
-                                    table.insert(canMigrateReset, entity)
-                                    entities.set_can_migrate(entity, false)
-                                end
-                            end
-                            entitiesToControl = nil
-                            allEntities = nil
-                            util.yield(200)
-                        end
-                        for _, entity in pairs(canMigrateReset) do
-                            entities.set_can_migrate(entity, true)
-                        end
-                        canMigrateReset = nil
-                        util.yield()
-                        util.stop_thread()
-                    end)
-                else
-                    rqControlActive = false
-                end
-            end)
-            rqControlSettings:divider("Settings")
-            rqControlSettings:toggle("Peds", {}, "", function(value)
-                rqControlPeds = value
-            end, true)
-            rqControlSettings:toggle("Vehicles", {}, "", function(value)
-                rqControlVehicles = value
-            end, true)
-            rqControlSettings:toggle("Objects", {}, "", function(value)
-                rqControlObjects = value
-            end, true)
-            rqControlSettings:toggle("Prevent Entity Ownership Changes", {}, "CAUTION: Using this can disrupt normal gameplay for other players. They will not be able to drive vehicles you control.", function(value)
-                rqControlCanMigrate = value
-            end)
         protections:action("Stop All Sounds", {"stopsounds"}, "", function()
             for i = -1,100 do
                 STOP_SOUND(i)
@@ -590,20 +496,20 @@ local scriptStartTime = util.current_time_millis()
     -----ᴄʜᴀᴛLɪsᴛ-----
         -----ᴄᴏᴍᴍᴀɴᴅBᴏxCʜᴀᴛ-----
             local commandBoxChat = chatList:list("Command Box Chat")
-            local toggleChatHistory = menu.ref_by_path("Online>Chat>Always Open", 53)
-            local disableChatInputAll = menu.ref_by_path("Game>Disables>Disable Game Inputs>MP_TEXT_CHAT_ALL", 53)
-            local disableChatInputTeam = menu.ref_by_path("Game>Disables>Disable Game Inputs>MP_TEXT_CHAT_TEAM", 53)
+            local toggleChatHistory = menu.ref_by_path("Online>Chat>Always Open", 55)
+            local disableChatInputAll = menu.ref_by_path("Game>Disables>Disable Game Inputs>MP_TEXT_CHAT_ALL", 55)
+            local disableChatInputTeam = menu.ref_by_path("Game>Disables>Disable Game Inputs>MP_TEXT_CHAT_TEAM", 55)
             local showTyping
             commandBoxChat:toggle_loop("Command Box Chat", {"commandboxchat"}, "Use the command box to chat. Useful if chat is not opening when pressing 'T'. This option disables the in game chat box to prevent crashing when co-loading cherax and typing in chat.", function()
                 disableChatInputAll.value = true
                 disableChatInputTeam.value = true
                 if !menu.command_box_is_open() then
-                    if util.is_key_down(0x54) and !IS_SYSTEM_UI_BEING_DISPLAYED() then -- Kᴇʏ 'T'
+                    if util.is_key_down(0x54) and !IS_SYSTEM_UI_BEING_DISPLAYED() then --! Kᴇʏ 'T'
                         util.yield()
                         if showTyping.value then
                             for players.list(false) as pid do
                                 if players.exists(pid) then
-                                    util.trigger_script_event(1 << pid, {-1760661233, players.user(), pid, 8642}) -- Sᴛᴀʀᴛ Tʏᴘɪɴɢ
+                                    util.trigger_script_event(1 << pid, {-1760661233, players.user(), pid, 8642}) --! Sᴛᴀʀᴛ Tʏᴘɪɴɢ
                                 end
                             end
                             util.yield()
@@ -618,17 +524,17 @@ local scriptStartTime = util.current_time_millis()
                         if showTyping.value then
                             for players.list(false) as pid do
                                 if players.exists(pid) then
-                                    util.trigger_script_event(1 << pid, {476054205, players.user(), pid, 5689}) -- Sᴛᴏᴘ Tʏᴘɪɴɢ
+                                    util.trigger_script_event(1 << pid, {476054205, players.user(), pid, 5689}) --! Sᴛᴏᴘ Tʏᴘɪɴɢ
                                 end
                             end
                             util.yield()
                         end
-                    elseif util.is_key_down(0x59) and !IS_SYSTEM_UI_BEING_DISPLAYED() then -- Kᴇʏ 'Y'
+                    elseif util.is_key_down(0x59) and !IS_SYSTEM_UI_BEING_DISPLAYED() then --! Kᴇʏ 'Y'
                         util.yield()
                         if showTyping.value then
                             for players.list(false) as pid do
                                 if players.exists(pid) then
-                                    util.trigger_script_event(1 << pid, {-1760661233, players.user(), pid, 8642}) -- Sᴛᴀʀᴛ Tʏᴘɪɴɢ
+                                    util.trigger_script_event(1 << pid, {-1760661233, players.user(), pid, 8642}) --! Sᴛᴀʀᴛ Tʏᴘɪɴɢ
                                 end
                             end
                             util.yield()
@@ -643,7 +549,7 @@ local scriptStartTime = util.current_time_millis()
                         if showTyping.value then
                             for players.list(false) as pid do
                                 if players.exists(pid) then
-                                    util.trigger_script_event(1 << pid, {476054205, players.user(), pid, 5689}) -- Sᴛᴏᴘ Tʏᴘɪɴɢ
+                                    util.trigger_script_event(1 << pid, {476054205, players.user(), pid, 5689}) --! Sᴛᴏᴘ Tʏᴘɪɴɢ
                                 end
                             end
                             util.yield()
@@ -671,19 +577,18 @@ local scriptStartTime = util.current_time_millis()
             local logChatEnabled = false
             local team_chat_colour = 9
             local global_chat_colour = 7
-            local function onChatMessage(sender, reserved, text, team_chat, networked, is_auto)
+            chat.on_message(function(sender, reserved, text, team_chat, networked, is_auto)
                 if logChatEnabled then
                     local playerName = players.get_name(sender)
                     local logColour = team_chat and chatColours[team_chat_colour] or chatColours[global_chat_colour]
                     local logChatMessage = $"{logColour}{playerName} [{(team_chat and "TEAM" or "ALL")}] {text}{ANSI.RESET}"
                     util.toast(logChatMessage, TOAST_CONSOLE)
                 end
-            end
-            chat.on_message(onChatMessage)
+            end)
             chatList:toggle("Log To Console With Coloured Text", {}, "Logs all chat messages to the console with coloured text.", function(on)
-                if on and !menu.ref_by_path("Stand>Console", 53).value then
+                if on and !menu.ref_by_path("Stand>Console", 55).value then
                     util.toast("Enabled Stand Console At 'Stand > Console'.")
-                    menu.ref_by_path("Stand>Console", 53).value = true
+                    menu.ref_by_path("Stand>Console", 55).value = true
                 end
                 logChatEnabled = on
             end)
@@ -697,7 +602,7 @@ local scriptStartTime = util.current_time_millis()
             }, 9, function(value, menu_name)
                 team_chat_colour = value
             end)
-    local showspeakerson = online:toggle_loop("Show speakers", {"showspeakers"}, "Accurately shows who is talking in voice chat as soon as it happens. Better than vanilla. The speakers name will be shown in stands info overlay for easy visibility.", function()
+    local showspeakerson = online:toggle_loop("Show Who's Using Voice Chat", {"showvc"}, "Accurately shows who is talking in voice chat as soon as it happens. Better than vanilla. The speakers name will be shown in stands info overlay.", function()
         for players.list() as pid do
             if NETWORK_IS_PLAYER_TALKING(pid) then
                 util.draw_debug_text($"{players.get_name(pid)} is talking")
@@ -737,8 +642,8 @@ local scriptStartTime = util.current_time_millis()
     end, function()
         bst_detection_data = nil
     end)
-    online:toggle_loop("Script Host Rotation", {"rotatesh"}, "Gives each player in the session script host sequentially, with a 20-second delay between each transfer.", function()
-        for _, pid in ipairs(players.list()) do
+    online:toggle_loop("Script Host Rotation", {"rotatesh"}, "Gives each player in the session script host sequentially, with a 20-second delay between each transfer. Useful if the session is broken.", function()
+        for players.list() as pid do
             if players.exists(pid) then
                 util.toast($"Giving script host to player: {players.get_name(pid)}")
                 menu.trigger_commands($"givesh {players.get_name(pid)}")
@@ -757,37 +662,120 @@ local scriptStartTime = util.current_time_millis()
 
 -----Wᴏʀʟᴅ Lɪsᴛ​​​​​​​​​-----
     -----Tʀᴀғғɪᴄ-----
-    traffic:toggle_loop("Delete Modded Population Multipliers", {""}, "Deletes modded population multiplier areas that stand misses.", function()
-        standNoModPopRef = menu.ref_by_path("Online>Protections>Delete Modded Pop Multiplier Areas", 53)
-        if !standNoModPopRef.value then standNoModPopRef.value = true end
-        for i = -1, 100 do
-            if DOES_POP_MULTIPLIER_AREA_EXIST(i) then
-                if IS_POP_MULTIPLIER_AREA_NETWORKED(i) then
-                    util.toast($"Found a Modded Pop Multiplier Area with ID: {i}... Removing...")
-                end
-                REMOVE_POP_MULTIPLIER_AREA(i, true)
-            end
-        end
-    end, function()
-        standNoModPopRef.value = false
-    end)
-    traffic:toggle("No Traffic", {}, "Clears traffic for all players by adding a networked population multiplier.", function(on)
-        if on then
-            CTped_sphere = 0.0
-            CTtraffic_sphere = 0.0
-            CTpop_multiplier_id = ADD_POP_MULTIPLIER_SPHERE(1.1, 1.1, 1.1, 15000.0, CTped_sphere, CTtraffic_sphere, false, true)
-            CLEAR_AREA(1.1, 1.1, 1.1, 19999.9, true, false, false, true)
-        else
-            REMOVE_POP_MULTIPLIER_SPHERE(CTpop_multiplier_id, false);
+        traffic:toggle_loop("Delete Modded Population Multipliers", {""}, "Deletes modded population multiplier areas that stand misses.", function()
+            standNoModPopRef = menu.ref_by_path("Online>Protections>Delete Modded Pop Multiplier Areas", 55)
+            if !standNoModPopRef.value then standNoModPopRef.value = true end
             for i = -1, 100 do
                 if DOES_POP_MULTIPLIER_AREA_EXIST(i) then
+                    if IS_POP_MULTIPLIER_AREA_NETWORKED(i) then
+                        util.toast($"Found a Modded Pop Multiplier Area with ID: {i}... Removing...")
+                    end
                     REMOVE_POP_MULTIPLIER_AREA(i, true)
                 end
             end
-        end
-    end)
+        end, function()
+            standNoModPopRef.value = false
+        end)
+        traffic:toggle("No Traffic", {}, "Clears traffic for all players by adding a networked population multiplier.", function(on)
+            if on then
+                CTpop_multiplier_id = ADD_POP_MULTIPLIER_SPHERE(1.1, 1.1, 1.1, 15000.0, 0.0, 0.0, false, true)
+                CLEAR_AREA(1.1, 1.1, 1.1, 19999.9, true, false, false, true)
+            else
+                REMOVE_POP_MULTIPLIER_SPHERE(CTpop_multiplier_id, false)
+                for i = -1, 100 do
+                    if DOES_POP_MULTIPLIER_AREA_EXIST(i) then
+                        REMOVE_POP_MULTIPLIER_AREA(i, true)
+                    end
+                end
+            end
+        end)
+    -----EɴᴛɪᴛʏCᴏɴᴛʀᴏʟ-----
+        local rqControlActive = false
+        local rqControlPeds = true
+        local rqControlVehicles = true
+        local rqControlObjects = true
+        local rqControlCanMigrate = false
+        local rqControlThread = nil
+        rqControlSettings:toggle("Control Entities", {"controlallentities"}, "Continuously attempts to gain control of entities within a 250 meter range. Excludes vehicles being driven by players. \n(Not Recommended)", function(on)
+            if on then
+                rqControlActive = true
+                rqControlThread = util.create_thread(function() 
+                    local canMigrateReset = {}
+                    while rqControlActive do
+                        local playerCoords = GET_ENTITY_COORDS(players.user_ped())
+                        local entitiesToControl = {}
+                        local allEntities = {}
+                        if rqControlPeds then
+                            for _, ped in pairs(entities.get_all_peds_as_handles()) do
+                                if !IS_PED_A_PLAYER(ped) then
+                                    table.insert(allEntities, ped)
+                                end
+                            end
+                        end
+                        if rqControlVehicles then
+                            for _, vehicle in pairs(entities.get_all_vehicles_as_handles()) do
+                                local driverPed = GET_PED_IN_VEHICLE_SEAT(vehicle, -1)
+                                if driverPed == 0 or !IS_PED_A_PLAYER(driverPed) then
+                                    table.insert(allEntities, vehicle)
+                                end
+                            end
+                        end
+                        if rqControlObjects then
+                            for _, object in pairs(entities.get_all_objects_as_handles()) do
+                                table.insert(allEntities, object)
+                            end
+                        end
+                        for _, entity in pairs(allEntities) do
+                            local entityCoords = GET_ENTITY_COORDS(entity)
+                            local distance = VDIST2(playerCoords.x, playerCoords.y, playerCoords.z, entityCoords.x, entityCoords.y, entityCoords.z)
+                            if distance <= 62500.0 then
+                                table.insert(entitiesToControl, entity)
+                            end
+                        end
+                        for _, entity in pairs(entitiesToControl) do
+                            if !NETWORK_HAS_CONTROL_OF_ENTITY(entity) then
+                                NETWORK_REQUEST_CONTROL_OF_ENTITY(entity)
+                                util.yield(10)
+                            end
+                            if rqControlCanMigrate and NETWORK_HAS_CONTROL_OF_ENTITY(entity) and entities.get_can_migrate(entity) then
+                                table.insert(canMigrateReset, entity)
+                                entities.set_can_migrate(entity, false)
+                            end
+                        end
+                        entitiesToControl = nil
+                        allEntities = nil
+                        util.yield(200)
+                    end
+                    for _, entity in pairs(canMigrateReset) do
+                        entities.set_can_migrate(entity, true)
+                    end
+                    canMigrateReset = nil
+                    util.yield()
+                end)
+            else
+                rqControlActive = false
+                if rqControlThread and util.is_scheduled_in(rqControlThread) then
+                    util.shoot_thread(rqControlThread)
+                    rqControlThread = nil
+                end
+            end
+        end)
+        rqControlSettings:divider("Settings")
+        rqControlSettings:toggle("Peds", {}, "", function(value)
+            rqControlPeds = value
+        end, true)
+        rqControlSettings:toggle("Vehicles", {}, "", function(value)
+            rqControlVehicles = value
+        end, true)
+        rqControlSettings:toggle("Objects", {}, "", function(value)
+            rqControlObjects = value
+        end, true)
+        rqControlSettings:toggle("Prevent Entity Ownership Changes", {}, "CAUTION: Using this can disrupt normal gameplay for other players. They will not be able to drive vehicles you control.", function(value)
+            rqControlCanMigrate = value
+        end)
+    
     -----ᴄʟᴇᴀʀAʀᴇᴀOᴘᴛɪᴏɴs-----
-        clearAreaOptions:textslider("Clear Area", {}, "", {"Peds", "Vehicles", "Objects", "Pickups", "Projectiles", "Sounds"}, function(index, name) -- ғʀᴏᴍ ᴊɪɴxsᴄʀɪᴘᴛ
+        clearAreaOptions:textslider("Clear Area", {}, "", {"Peds", "Vehicles", "Objects", "Pickups", "Projectiles", "Sounds"}, function(index, name) --! ғʀᴏᴍ ᴊɪɴxsᴄʀɪᴘᴛ
             local counter = 0
             switch index do
                 case 1:
@@ -870,11 +858,11 @@ local scriptStartTime = util.current_time_millis()
         --    end
         --
         --    -- Sᴇᴛ ᴛʜᴇ ɴᴇᴡ ᴠᴀʟᴜᴇs (Cʀᴇᴅɪᴛ ᴛᴏ TᴏxɪᴋSᴋᴜʟʟ)
-        --    memory.write_int(memory.script_global(262145 + 34329), 2508868239) -- PLACES KNIFE AND BAT INTO GUN VAN USING THEIR HASHES
+        --    memory.write_int(memory.script_global(262145 + 34329), 2508868239) --! PLACES KNIFE AND BAT INTO GUN VAN USING THEIR HASHES
         --    memory.write_int(memory.script_global(262145 + 34329 + 1), 2578778090)
         --
         --    for i = 25, 75 do
-        --        memory.write_int(memory.script_global(262145 + 34331 + i), 0) -- ONE OF THESE ENABLES BAT & KNIFE LIVERIES LOL!
+        --        memory.write_int(memory.script_global(262145 + 34331 + i), 0) --! ONE OF THESE ENABLES BAT & KNIFE LIVERIES LOL!
         --    end
         --end
         --local function restoreOriginalSpecialLiveriesGlobals()
@@ -897,78 +885,95 @@ local scriptStartTime = util.current_time_millis()
 -----DᴇᴠDʙɢ-----
     if devmode() then
         local debuglist = menu.list(roothide_menu, "Debug", {"rhdebug"}, "")
-
         debuglist:action("Restart Script", {"rs", "rhrs"}, "Goes through the script stop process, freshly loads the contents of the script file, and starts the main thread again.", function()
             util.restart_script()
         end)
         debuglist:action("Log stand lang registered codes", {}, "", function()
-            util.toast(lang.find_builtin("Movement"), TOAST_CONSOLE)
+            util.toast(lang.find_builtin("This command is only available in GTA Online."), TOAST_CONSOLE)
+        end)
+        debuglist:toggle_loop("Log Nearby Peds", {}, "50 Meters", function()
+            local playerPed = players.user_ped()
+            local playerPos = GET_ENTITY_COORDS(playerPed, false)
+            for _, ped in ipairs(entities.get_all_peds_as_handles()) do
+                if DOES_ENTITY_EXIST(ped) and ped != playerPed and !IS_PED_A_PLAYER(ped) then
+                    local pedPos = GET_ENTITY_COORDS(ped, false)
+                    local distance = VDIST(playerPos.x, playerPos.y, playerPos.z, pedPos.x, pedPos.y, pedPos.z)
+                    if distance <= 50.0 then
+                        util.log($"{ANSI.RED}[DEBUG]{ANSI.RESET} Nearby NPC - Distance: {distance}")
+                    end
+                end
+            end
         end)
         require("lib.roothide.support")
         require("lib.roothide.dev")
-
-        
     end
 
 -----Sʜᴀᴅᴏᴡ Rᴏᴏᴛ-----
+    local allPlayersTrolling = menu.ref_by_path("Players>All Players>Trolling", 55)
     -----ᴋɪᴄᴋAʟʟ-----
-        local kickAll = menu.ref_by_path("Players>All Players", 53):getChildren()[1]:attachBefore(menu.shadow_root():list("Kick", {}, ""))
+        local kickAll = menu.ref_by_path("Players>All Players", 55):getChildren()[1]:attachBefore(menu.shadow_root():list("Kick", {}, ""))
         kickAll:action("Kick All", {"kick"}, "Removes everyone that it can.", function()
-            for _, pid in ipairs(players.list_except(true, false, false, false)) do -- Loop through all players except the user
-                if players.get_host() == players.user() then -- If the user is the session host
-                    playerRefTrigger(menu.player_root(pid), "Kick>Love Letter") -- Kick the player using the "Love Letter" method
-                else -- If the user is not the session host
-                    if players.get_host() != pid then -- If the player is not the host
+            for _, pid in ipairs(players.list_except(true, false, false, false)) do --! Loop through all players except the user
+                if players.get_host() == players.user() then --! If the user is the session host
+                    playerRefTrigger(menu.player_root(pid), "Kick>Love Letter") --! Kick the player using the "Love Letter" method
+                else --! If the user is not the session host
+                    if players.get_host() != pid then --! If the player is not the host
                         if !players.is_marked_as_modder(pid) then
-                            playerRefTrigger(menu.player_root(pid), "Kick>Smart") -- If the player is not marked as a modder, kick using the "Smart" method
+                            playerRefTrigger(menu.player_root(pid), "Kick>Smart") --! If the player is not marked as a modder, kick using the "Smart" method
                         else
-                            playerRefTrigger(menu.player_root(pid), "Kick>Love Letter") -- If the player is marked as a modder, kick using the "Love Letter" method
+                            playerRefTrigger(menu.player_root(pid), "Kick>Love Letter") --! If the player is marked as a modder, kick using the "Love Letter" method
                         end
-                    else -- If the player is the host
-                        if !players.is_marked_as_modder(pid) then -- If the host is not marked as a modder
-                            playerRefTrigger(menu.player_root(pid), "Kick>Smart") -- Kick the host using the "Smart" method
+                    else --! If the player is the host
+                        if !players.is_marked_as_modder(pid) then --! If the host is not marked as a modder
+                            playerRefTrigger(menu.player_root(pid), "Kick>Smart") --! Kick the host using the "Smart" method
                         end
                     end
+                    util.yield(200) --! Wait for 200 milliseconds between each kick
                 end
-                util.yield(200) -- Wait for 200 milliseconds between each kick
             end
         end)
         kickAll:action("Kick All Strangers", {}, "Removes all players not added as a friend.", function()
-            for _, pid in ipairs(players.list_except(true, true, false, false)) do -- Loop through all players except the user and friends
-                if players.get_host() == players.user() then -- If the user is the session host
-                    playerRefTrigger(menu.player_root(pid), "Kick>Love Letter") -- Kick the player using the "Love Letter" method
-                else -- If the user is not the session host
-                    if players.get_host() != pid then -- If the player is not the host
+            for _, pid in ipairs(players.list_except(true, true, false, false)) do --! Loop through all players except the user and friends
+                if players.get_host() == players.user() then --! If the user is the session host
+                    playerRefTrigger(menu.player_root(pid), "Kick>Love Letter") --! Kick the player using the "Love Letter" method
+                else --! If the user is not the session host
+                    if players.get_host() != pid then --! If the player is not the host
                         if !players.is_marked_as_modder(pid) then
-                            playerRefTrigger(menu.player_root(pid), "Kick>Smart") -- If the player is not marked as a modder, kick using the "Smart" method
+                            playerRefTrigger(menu.player_root(pid), "Kick>Smart") --! If the player is not marked as a modder, kick using the "Smart" method
                         else
-                            playerRefTrigger(menu.player_root(pid), "Kick>Love Letter") -- If the player is marked as a modder, kick using the "Love Letter" method
+                            playerRefTrigger(menu.player_root(pid), "Kick>Love Letter") --! If the player is marked as a modder, kick using the "Love Letter" method
                         end
-                    else -- If the player is the host
-                        if !players.is_marked_as_modder(pid) then -- If the host is not marked as a modder
-                            playerRefTrigger(menu.player_root(pid), "Kick>Smart") -- Kick the host using the "Smart" method
+                    else --! If the player is the host
+                        if !players.is_marked_as_modder(pid) then --! If the host is not marked as a modder
+                            playerRefTrigger(menu.player_root(pid), "Kick>Smart") --! Kick the host using the "Smart" method
                         end
                     end
+                    util.yield(200) --! Wait for 200 milliseconds between each kick
                 end
-                util.yield(200) -- Wait for 200 milliseconds between each kick
+            end
+        end)
+    -----AllPlayers>Trolling-----
+        allPlayersTrolling:action("Send Sext", {"sext"}, "Sends a random sext (with an image attachment) to the player.", function()
+            local randomIndex = math.random(#sext)
+            for players.list(false) as pid do
+                util.trigger_script_event(1 << pid, sext[randomIndex])
             end
         end)
 
 -----Pʟᴀʏᴇʀ Oᴘᴛɪᴏɴs-----
-    local function handlePlayerOptions(pid)
-        player_root = menu.player_root(pid)
-        crashes_root = menu.ref_by_rel_path(menu.player_root(pid), "Crash")
-        kicks_root = menu.ref_by_rel_path(menu.player_root(pid), "Kick")
-        player_menu = player_root:list("Roothide")
-        misc_list = player_menu:list("Misc")
+    players.add_command_hook(function(pid, player_root)
+        local crashes_root = menu.ref_by_rel_path(menu.player_root(pid), "Crash")
+        local kicks_root = menu.ref_by_rel_path(menu.player_root(pid), "Kick")
+        
+        local player_menu = player_root:list("Roothide")
         
         player_root:getChildren()[1]:attachBefore(menu.shadow_root():action("Spectate", {}, "Toggles 'Nuts Method' Spectate on the player.", function()
             playerRefTrigger(menu.player_root(pid), "Spectate>Nuts Method")
         end))
+
         kicks_root:action("Block Join Kick", {"bjk"}, "Kicks the player and blocks their join in player history.", function()
             if pid == players.user() then
-                util.toast(lang.get_localised(-1974706693))
-                return
+                return util.toast(lang.get_localised(-1974706693))
             end
             local player = players.get_name(pid)
             menu.trigger_commands($"historyblock{player} on")
@@ -984,16 +989,15 @@ local scriptStartTime = util.current_time_millis()
                 end
             end
         end)
-
-        misc_list:action("LoveLetterKick Quick Access Command [llk player]", {"llk"}, "", function()
+        player_menu:action("LoveLetterKick Quick Access Command [llk player]", {"llk"}, "", function()
             playerRefTrigger(menu.player_root(pid), "Kick>Love Letter")
         end)
-        misc_list:action("Set Waypoint", {"swp"}, "", function()
+        player_menu:action("Set Waypoint", {"swp"}, "", function()
             local pos = players.get_position(pid)
             SET_NEW_WAYPOINT(pos.x, pos.y)
         end)
         local ghostPlayer
-        ghostPlayer = misc_list:toggle_loop("Ghost Player", {"ghost"}, "Ghosts the selected player.", function()
+        ghostPlayer = player_menu:toggle_loop("Ghost Player", {"ghost"}, "Ghosts the selected player.", function()
             if pid == players.user() then
                 util.toast(lang.get_localised(-1974706693))
                 ghostPlayer.value = false
@@ -1007,42 +1011,14 @@ local scriptStartTime = util.current_time_millis()
         end, function()
             SET_REMOTE_PLAYER_AS_GHOST(pid, false)
         end)
-
-
-    end
-    players.add_command_hook(handlePlayerOptions)
+        player_menu:action("Send Sext", {"sext"}, "Sends a random sext (with an image attachment) to all players.", function()
+            local randomIndex = math.random(#sext)
+            util.trigger_script_event(1 << pid, sext[randomIndex])
+        end)
+        
+    end)
 
 -----ᴄᴏɴsᴏʟᴇLᴏɢᴏ-----
-    local gradientColours = {
-        "\x1b[38;5;196m", -- Red
-        "\x1b[38;5;160m", -- Dark Red
-        "\x1b[38;5;202m", -- Dark Orange
-        "\x1b[38;5;208m", -- Orange
-        "\x1b[38;5;214m", -- Light Orange
-        "\x1b[38;5;220m", -- Gold
-        "\x1b[38;5;226m", -- Yellow
-        "\x1b[38;5;154m", -- Light Yellow
-        "\x1b[38;5;82m",  -- Light Green
-        "\x1b[38;5;46m",  -- Green
-        "\x1b[38;5;34m",  -- Dark Green
-    }
-    local textLogo = [[ 
-     ..      ...                                  s                   .       ..                  
-  :~"8888x :"%888x                               :8      .uef^"      @88>   dF                    
- 8    8888Xf  8888>         u.          u.      .88    :d88E         %8P   '88bu.                 
-X88x. ?8888k  8888X   ...ue888b   ...ue888b    :888ooo `888E          .    '*88888bu        .u    
-'8888L'8888X  '%88X   888R Y888r  888R Y888r -*8888888  888E .z8k   .@88u    ^"*8888N    ud8888.  
- "888X 8888X:xnHH(``  888R I888>  888R I888>   8888     888E~?888L ''888E`  beWE "888L :888'8888. 
-   ?8~ 8888X X8888    888R I888>  888R I888>   8888     888E  888E   888E   888E  888E d888 '88%" 
- -~`   8888> X8888    888R I888>  888R I888>   8888     888E  888E   888E   888E  888E 8888.+"    
- :H8x  8888  X8888   u8888cJ888  u8888cJ888   .8888Lu=  888E  888E   888E   888E  888F 8888L      
- 8888> 888~  X8888    "*888*P"    "*888*P"    ^%888*    888E  888E   888&  .888N..888  '8888c. .+ 
- 48"` '8*~   `8888!`    'Y"         'Y"         'Y"    m888N= 888>   R888"  `"888*""    "88888%   
-  ^-==""      `""                                       `Y"   888     ""       ""         "YP'    
-                                                             J88"                                 
-                                                             @%                                   
-                                                           :"                                      
-]]
 local function applyGradient(text, Lcolours)
     local lines = {}
     for line in text:gmatch("[^\r\n]+") do
@@ -1058,5 +1034,10 @@ local function applyGradient(text, Lcolours)
     return colouredText
 end
 if !SCRIPT_SILENT_START then util.toast(applyGradient(textLogo, gradientColours), TOAST_CONSOLE) end
+if !SCRIPT_SILENT_START then util.toast($"{ANSI.DARK_GREEN}[Roothide]{ANSI.RESET} Natives loaded in {nativeRequireEndTime}ms", TOAST_CONSOLE) end
+if !SCRIPT_SILENT_START then util.toast($"{ANSI.DARK_GREEN}[Roothide]{ANSI.RESET} Player History loaded in {phLoadTimeEnd}ms", TOAST_CONSOLE) end
 if !SCRIPT_SILENT_START then util.toast($"{ANSI.DARK_GREEN}[Roothide]{ANSI.RESET} Script loaded in {(util.current_time_millis() - scriptStartTime)}ms", TOAST_CONSOLE) end
-util.keep_running() -- Kᴇᴇᴘ ᴛʜᴇ sᴄʀɪᴘᴛ ʀᴜɴɴɪɴɢ
+util.keep_running() --! Kᴇᴇᴘ ᴛʜᴇ sᴄʀɪᴘᴛ ʀᴜɴɴɪɴɢ
+util.on_stop(function()
+    cleanupAboveMapToasts()
+end)
