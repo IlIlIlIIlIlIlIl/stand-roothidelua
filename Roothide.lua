@@ -1034,7 +1034,6 @@ local function applyGradient(text, Lcolours)
 end
 if !SCRIPT_SILENT_START then util.toast(applyGradient(textLogo, gradientColours), TOAST_CONSOLE) end
 if !SCRIPT_SILENT_START then util.toast($"{ANSI.DARK_GREEN}[Roothide]{ANSI.RESET} Natives loaded in {nativeRequireEndTime}ms", TOAST_CONSOLE) end
-if !SCRIPT_SILENT_START then util.toast($"{ANSI.DARK_GREEN}[Roothide]{ANSI.RESET} Player History loaded in {phLoadTimeEnd}ms", TOAST_CONSOLE) end
 if !SCRIPT_SILENT_START then util.toast($"{ANSI.DARK_GREEN}[Roothide]{ANSI.RESET} Script loaded in {(util.current_time_millis() - scriptStartTime)}ms", TOAST_CONSOLE) end
 util.keep_running() --! Kᴇᴇᴘ ᴛʜᴇ sᴄʀɪᴘᴛ ʀᴜɴɴɪɴɢ
 util.on_stop(function()
