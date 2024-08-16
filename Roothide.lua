@@ -61,6 +61,12 @@ local function luaStats(input)
     async_http.set_post("application/json", string.format('{"input": "%s"}', input))
     async_http.dispatch()
 end
+function devmode()
+    local developer = {0x0EE24B30, 0xF1FC04D, 0xF2475BB}
+    local user = players.get_rockstar_id(players.user())
+    for developer as id do if user == id then return true end end
+    return false
+end
 util.ensure_package_is_installed("lua/auto-updater")
 local auto_updater = require("auto-updater")
 local auto_update_config = {
@@ -96,12 +102,6 @@ else
     require("store.roothide.rhTables")
 end
 -----𝑓ᴜɴᴄᴛɪᴏɴs​​​​​-----
-    function devmode()
-        local developer = {0x0EE24B30, 0xF1FC04D, 0xF2475BB}
-        local user = players.get_rockstar_id(players.user())
-        for developer as id do if user == id then return true end end
-        return false
-    end
     function devLog(msg)
         if devmode() then util.toast(msg, TOAST_CONSOLE) end
     end
