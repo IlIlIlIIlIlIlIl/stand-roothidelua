@@ -143,30 +143,30 @@ end
     end
 
 -----Eɴᴀʙʟᴇ Cᴏʟᴏᴜʀs Iɴ Cᴏɴsᴏʟᴇ​​​​​-----
-    util.ensure_package_is_installed("lua/luaffi")
-    local ffi = require "luaffi"
-    local kernel32 = ffi.open("kernel32")
-    $define STD_OUTPUT_HANDLE = -11
-    $define INVALID_HANDLE_VALUE = -1
-    $define ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x4
-    function colourConsole()
-        local hSTDOUT = kernel32:call("GetStdHandle", STD_OUTPUT_HANDLE)
-        if hSTDOUT != INVALID_HANDLE_VALUE then
-            local mode = memory.alloc_int()
-            if kernel32:call("GetConsoleMode", hSTDOUT, mode) != 0 then
-                kernel32:call("SetConsoleMode", hSTDOUT, memory.read_int(mode) | ENABLE_VIRTUAL_TERMINAL_PROCESSING)
-            end
-        end
-    end
-    colourConsole()
-    local consoleToggled = menu.ref_by_path("Stand>Console", 55).value
-    util.create_tick_handler(function() --! Tɪᴄᴋ Hᴀɴᴅʟᴇʀ ᴛᴏ ᴇɴᴀʙʟᴇ ᴄᴏʟᴏᴜʀs ᴡʜᴇɴ ᴄᴏɴsᴏʟᴇ ɪs ᴇɴᴀʙʟᴇᴅ
-        if menu.ref_by_path("Stand>Console", 55).value and !consoleToggled then
-            util.yield()
-            colourConsole()
-        end
-        consoleToggled = menu.ref_by_path("Stand>Console", 55).value
-    end)
+    --util.ensure_package_is_installed("lua/luaffi")
+    --local ffi = require "luaffi"
+    --local kernel32 = ffi.open("kernel32")
+    --$define STD_OUTPUT_HANDLE = -11
+    --$define INVALID_HANDLE_VALUE = -1
+    --$define ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x4
+    --function colourConsole()
+    --    local hSTDOUT = kernel32:call("GetStdHandle", STD_OUTPUT_HANDLE)
+    --    if hSTDOUT != INVALID_HANDLE_VALUE then
+    --        local mode = memory.alloc_int()
+    --        if kernel32:call("GetConsoleMode", hSTDOUT, mode) != 0 then
+    --            kernel32:call("SetConsoleMode", hSTDOUT, memory.read_int(mode) | ENABLE_VIRTUAL_TERMINAL_PROCESSING)
+    --        end
+    --    end
+    --end
+    --colourConsole()
+    --local consoleToggled = menu.ref_by_path("Stand>Console", 55).value
+    --util.create_tick_handler(function() --! Tɪᴄᴋ Hᴀɴᴅʟᴇʀ ᴛᴏ ᴇɴᴀʙʟᴇ ᴄᴏʟᴏᴜʀs ᴡʜᴇɴ ᴄᴏɴsᴏʟᴇ ɪs ᴇɴᴀʙʟᴇᴅ
+    --    if menu.ref_by_path("Stand>Console", 55).value and !consoleToggled then
+    --        util.yield()
+    --        colourConsole()
+    --    end
+    --    consoleToggled = menu.ref_by_path("Stand>Console", 55).value
+    --end)
 
 -----Mᴇɴᴜ Sᴇᴛᴜᴘ-----
     local roothide_menu = menu.attach_before(menu.ref_by_path("Stand>Settings", 55), menu.list(menu.shadow_root(), "Roothide", {"roothidescript"}, "Roothide Script"))
@@ -567,37 +567,6 @@ end
             end)
             menu.set_visible(gMsgHidden, false)
             menu.set_visible(tMsgHidden, false)
-        -----ʟᴏɢCʜᴀᴛ-----
-            local chatColours = {[1] = ANSI.RED, [2] = ANSI.DARK_RED, [3] = ANSI.DARK_ORANGE, [4] = ANSI.ORANGE, [5] = ANSI.LIGHT_ORANGE, [6] = ANSI.GOLD, [7] = ANSI.YELLOW, [8] = ANSI.LIGHT_GREEN, [9] = ANSI.GREEN, [10] = ANSI.DARK_GREEN, [11] = ANSI.LIGHT_BLUE, [12] = ANSI.BLUE, [13] = ANSI.CYAN, [14] = ANSI.DARK_CYAN, [15] = ANSI.LIGHT_PURPLE, [16] = ANSI.PURPLE, [17] = ANSI.DARK_PURPLE, [18] = ANSI.LIGHT_MAGENTA, [19] = ANSI.MAGENTA, [20] = ANSI.DARK_MAGENTA, [21] = ANSI.LIGHT_PINK, [22] = ANSI.PINK, [23] = ANSI.DARK_PINK, [24] = ANSI.LIGHT_BROWN, [25] = ANSI.BROWN, [26] = ANSI.LIGHT_GREY, [27] = ANSI.GREY, [28] = ANSI.DARK_GREY, [29] = ANSI.WHITE}
-            chatList:divider("Chat Logging")
-            local logChatEnabled = false
-            local team_chat_colour = 9
-            local global_chat_colour = 7
-            chat.on_message(function(sender, reserved, text, team_chat, networked, is_auto)
-                if logChatEnabled then
-                    local playerName = players.get_name(sender)
-                    local logColour = team_chat and chatColours[team_chat_colour] or chatColours[global_chat_colour]
-                    local logChatMessage = $"{logColour}{playerName} [{(team_chat and "TEAM" or "ALL")}] {text}{ANSI.RESET}"
-                    util.toast(logChatMessage, TOAST_CONSOLE)
-                end
-            end)
-            chatList:toggle("Log To Console With Coloured Text", {}, "Logs all chat messages to the console with coloured text.", function(on)
-                if on and !menu.ref_by_path("Stand>Console", 55).value then
-                    util.toast("Enabled Stand Console At 'Stand > Console'.")
-                    menu.ref_by_path("Stand>Console", 55).value = true
-                end
-                logChatEnabled = on
-            end)
-            chatList:list_select("Global Chat Colour", {}, "Change the colour of global [All] chat messages.", {
-                {1, "Red"},{2, "Dark Red"},{3, "Dark Orange"},{4, "Orange"},{5, "Light Orange"},{6, "Gold"},{7, "Yellow"},{8, "Light Green"},{9, "Green"},{10, "Dark Green"},{11, "Light Blue"},{12, "Blue"},{13, "Cyan"},{14, "Dark Cyan"},{15, "Light Purple"},{16, "Purple"},{17, "Dark Purple"},{18, "Light Magenta"},{19, "Magenta"},{20, "Dark Magenta"},{21, "Light Pink"},{22, "Pink"},{23, "Dark Pink"},{24, "Light Brown"},{25, "Brown"},{26, "Light Grey"},{27, "Grey"},{28, "Dark Grey"},{29, "White"}
-            }, 7, function(value, menu_name)
-                global_chat_colour = value
-            end)
-            chatList:list_select("Team Chat Colour", {}, "Change the colour of team/org chat messages.", {
-                {1, "Red"},{2, "Dark Red"},{3, "Dark Orange"},{4, "Orange"},{5, "Light Orange"},{6, "Gold"},{7, "Yellow"},{8, "Light Green"},{9, "Green"},{10, "Dark Green"},{11, "Light Blue"},{12, "Blue"},{13, "Cyan"},{14, "Dark Cyan"},{15, "Light Purple"},{16, "Purple"},{17, "Dark Purple"},{18, "Light Magenta"},{19, "Magenta"},{20, "Dark Magenta"},{21, "Light Pink"},{22, "Pink"},{23, "Dark Pink"},{24, "Light Brown"},{25, "Brown"},{26, "Light Grey"},{27, "Grey"},{28, "Dark Grey"},{29, "White"}
-            }, 9, function(value, menu_name)
-                team_chat_colour = value
-            end)
     local showspeakerson = online:toggle_loop("Show Who's Using Voice Chat", {"showvc"}, "Accurately shows who is talking in voice chat as soon as it happens. Better than vanilla. The speakers name will be shown in stands info overlay.", function()
         for players.list() as pid do
             if NETWORK_IS_PLAYER_TALKING(pid) then
@@ -895,7 +864,7 @@ end
                     local pedPos = GET_ENTITY_COORDS(ped, false)
                     local distance = VDIST(playerPos.x, playerPos.y, playerPos.z, pedPos.x, pedPos.y, pedPos.z)
                     if distance <= 50.0 then
-                        util.log($"{ANSI.RED}[DEBUG]{ANSI.RESET} Nearby NPC - Distance: {distance}")
+                        util.log($"[DEBUG] Nearby NPC - Distance: {distance}")
                     end
                 end
             end
@@ -974,7 +943,7 @@ end
             local player = players.get_name(pid)
             menu.trigger_commands($"historyblock{player} on")
             aboveMapToastNoTitle($"Enabled block join for {player}. :)", 135)
-            util.toast($"{ANSI.MAGENTA}Enabled block join for {player}. :){ANSI.RESET}", TOAST_CONSOLE)
+            util.toast($"Enabled block join for {player}. :)", TOAST_CONSOLE)
             if players.get_host() == players.user() then
                 playerRefTrigger(menu.player_root(pid), "Kick>Love Letter")
             else
@@ -1014,24 +983,8 @@ end
         
     end)
 
------ᴄᴏɴsᴏʟᴇLᴏɢᴏ-----
-local function applyGradient(text, Lcolours)
-    local lines = {}
-    for line in text:gmatch("[^\r\n]+") do
-        table.insert(lines, line)
-    end
-    local colouredText = $"{lines[1]}\n"
-    local colourCount = #Lcolours
-    local lineCount = #lines - 1
-    for i = 2, #lines do
-        local colourIndex = math.floor((i - 2) / (lineCount - 1) * (colourCount - 1)) + 1
-        colouredText = $"{colouredText}{Lcolours[colourIndex]}{lines[i]}{ANSI.RESET}\n"
-    end
-    return colouredText
-end
-if !SCRIPT_SILENT_START then util.toast(applyGradient(textLogo, gradientColours), TOAST_CONSOLE) end
-if !SCRIPT_SILENT_START then util.toast($"{ANSI.DARK_GREEN}[Roothide]{ANSI.RESET} Natives loaded in {nativeRequireEndTime}ms", TOAST_CONSOLE) end
-if !SCRIPT_SILENT_START then util.toast($"{ANSI.DARK_GREEN}[Roothide]{ANSI.RESET} Script loaded in {(util.current_time_millis() - scriptStartTime)}ms", TOAST_CONSOLE) end
+if !SCRIPT_SILENT_START then util.toast($"[Roothide] Natives loaded in {nativeRequireEndTime}ms", TOAST_CONSOLE) end
+if !SCRIPT_SILENT_START then util.toast($"[Roothide] Script loaded in {(util.current_time_millis() - scriptStartTime)}ms", TOAST_CONSOLE) end
 util.keep_running() --! Kᴇᴇᴘ ᴛʜᴇ sᴄʀɪᴘᴛ ʀᴜɴɴɪɴɢ
 util.on_stop(function()
     cleanupAboveMapToasts()
